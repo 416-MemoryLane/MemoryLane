@@ -16,21 +16,11 @@ func NewGallery(l *log.Logger, filepath string) *Gallery {
 func (g *Gallery) CreateAlbum() (*Album, error) {
 	return &Album{}, nil
 }
+
 func (g *Gallery) DeleteAlbum() (*Album, error) {
 	return &Album{}, nil
 }
-func (g *Gallery) AddPicture() (*Picture, error) {
-	return &Picture{}, nil
-}
-func (g *Gallery) DeletePicture() (*Picture, error) {
-	return &Picture{}, nil
-}
-func (g *Gallery) GetAlbums() *Albums {
+
+func (g *Gallery) GetAllAlbums() *Albums {
 	return &Albums{}
-}
-func (g *Gallery) GetAllPicturesFromAlbum() *Pictures {
-	return &Pictures{}
-}
-func (g *Gallery) GetPicture() *Picture {
-	return &Picture{}
 }
