@@ -29,7 +29,12 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 
 	var a Albums
 	for _, e := range d {
-		a = append(a, Album{e})
+		i, err := e.Info()
+		if err != nil {
+			return nil, err
+		}
+
+		a = append(a, Album{e.Name(), e.Type(), i})
 	}
 
 	wd, err := os.Getwd()
