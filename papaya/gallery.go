@@ -123,7 +123,13 @@ func (g *Gallery) AddPhoto(album string, photo Photo) (Photo, error) {
 		return "", err
 	}
 
+	a := (*g.Albums)[album]
+	(*a.Photos)[string(photo)] = true
+
 	g.l.Printf("New photo added to %v: %v", album, photo)
+
+	// TODO: This is incorrect. Must initialize photo data structure in NewGallery
+	g.l.Printf("Number of photos in album %v: %v", album, len(*a.Photos))
 
 	return photo, nil
 }
