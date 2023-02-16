@@ -51,7 +51,7 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 func (g *Gallery) CreateAlbum(album string) (string, error) {
 	albumPath := fmt.Sprintf("%v/%v", g.RelPath, album)
 
-	err := os.Mkdir(albumPath, os.ModeDir)
+	err := os.Mkdir(albumPath, 0777)
 	if err != nil {
 		return "", err
 	}
