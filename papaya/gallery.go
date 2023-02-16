@@ -140,6 +140,8 @@ func (g *Gallery) DeletePhoto(album string, photo string) (Photo, error) {
 	return "", nil
 }
 
+// TODO: Add view functions
+
 // Stringer for Gallery
 func (g Gallery) String() string {
 	return fmt.Sprintf("\nGallery filepath: %v\nNumber of albums: %v", g.FullPath, len(*g.Albums))
