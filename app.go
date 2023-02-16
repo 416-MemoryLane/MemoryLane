@@ -29,6 +29,13 @@ func main() {
 	// 	l.Printf(a)
 	// }
 
+	// p, err := g.AddPhoto("cool-album4", "photo2")
+	// if err != nil {
+	// 	l.Println("Error adding photo:", err)
+	// } else {
+	// 	l.Println(p)
+	// }
+
 	l.Printf("%v", g)
 
 	// Most likely will want to reconcile gallery with other nodes here
