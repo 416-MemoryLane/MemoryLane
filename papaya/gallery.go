@@ -76,7 +76,7 @@ func (g *Gallery) DeleteAlbum(album string) (string, error) {
 		return "", err
 	}
 
-	err = os.Remove(albumPath)
+	err = os.RemoveAll(albumPath)
 	if err != nil {
 		return "", err
 	}
