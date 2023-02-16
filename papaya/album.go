@@ -8,7 +8,7 @@ type Album struct {
 	info     fs.FileInfo
 }
 
-type Albums []*Album
+type Albums *map[string]*Album
 
 func (a Album) Name() string {
 	return a.name

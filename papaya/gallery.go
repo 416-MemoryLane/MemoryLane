@@ -27,14 +27,14 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 		}
 	}
 
-	var a Albums
+	var a Albums = &map[string]*Album{}
 	for _, e := range d {
 		i, err := e.Info()
 		if err != nil {
 			return nil, err
 		}
 
-		a = append(a, &Album{e.Name(), e.Type(), i})
+		(*a)[e.Name()] = &Album{e.Name(), e.Type(), i}
 	}
 
 	wd, err := os.Getwd()
@@ -67,12 +67,12 @@ func (g *Gallery) CreateAlbum(album string) (string, error) {
 		return "", err
 	}
 
-	g.Albums = append(g.Albums, &Album{e.Name(), e.Type(), info})
+	(*g.Albums)[e.Name()] = &Album{e.Name(), e.Type(), info}
 
 	return albumPath, nil
 }
 
 // Stringer for Gallery
 func (g Gallery) String() string {
-	return fmt.Sprintf("\nGallery filepath: %v\nNumber of albums: %v", g.FullPath, len(g.Albums))
+	return fmt.Sprintf("\nGallery filepath: %v\nNumber of albums: %v", g.FullPath, len(*g.Albums))
 }
