@@ -8,7 +8,7 @@ type Album struct {
 	info     fs.FileInfo
 }
 
-type Albums []fs.DirEntry
+type Albums []*Album
 
 func (a Album) Name() string {
 	return a.name

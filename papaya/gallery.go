@@ -34,7 +34,7 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 			return nil, err
 		}
 
-		a = append(a, Album{e.Name(), e.Type(), i})
+		a = append(a, &Album{e.Name(), e.Type(), i})
 	}
 
 	wd, err := os.Getwd()
