@@ -27,6 +27,11 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 		}
 	}
 
+	var a Albums
+	for _, e := range d {
+		a = append(a, Album{e})
+	}
+
 	wd, err := os.Getwd()
 	if err != nil {
 		l.Println(err)
@@ -34,7 +39,7 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 	fullPath := fmt.Sprintf("%v/%v", wd, relPath)
 	relPath = fmt.Sprintf("./%v", relPath)
 
-	return &Gallery{l, fullPath, relPath, d}, nil
+	return &Gallery{l, fullPath, relPath, a}, nil
 }
 
 // Stringer for Gallery

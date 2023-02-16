@@ -2,4 +2,8 @@ package papaya
 
 import "io/fs"
 
-type Albums []fs.DirEntry
+type Album struct {
+	DirEntry fs.DirEntry
+}
+
+type Albums []Album
