@@ -72,6 +72,27 @@ func (g *Gallery) CreateAlbum(album string) (string, error) {
 	return albumPath, nil
 }
 
+// Delete an album
+func (g *Gallery) DeleteAlbum(album string) (string, error) {
+	albumPath := fmt.Sprintf("%v/%v", g.RelPath, album)
+
+	_, err := os.Stat(albumPath)
+	if err != nil {
+		return "", err
+	}
+
+	err = os.Remove(albumPath)
+	if err != nil {
+		return "", err
+	}
+
+	delete(*g.Albums, album)
+
+	g.l.Printf("Album deleted: %v", album)
+
+	return albumPath, err
+}
+
 // Stringer for Gallery
 func (g Gallery) String() string {
 	return fmt.Sprintf("\nGallery filepath: %v\nNumber of albums: %v", g.FullPath, len(*g.Albums))
