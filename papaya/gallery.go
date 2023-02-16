@@ -47,6 +47,30 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 	return &Gallery{l, fullPath, relPath, a}, nil
 }
 
+// Create an album if it doesn't exist
+func (g *Gallery) CreateAlbum(album string) (string, error) {
+	albumPath := fmt.Sprintf("%v/%v", g.RelPath, album)
+
+	err := os.Mkdir(albumPath, os.ModeDir)
+	if err != nil {
+		return "", err
+	}
+
+	i, err := os.Stat(albumPath)
+	if err != nil {
+		return "", err
+	}
+	e := fs.FileInfoToDirEntry(i)
+	info, err := e.Info()
+	if err != nil {
+		return "", err
+	}
+
+	g.Albums = append(g.Albums, &Album{e.Name(), e.Type(), info})
+
+	return albumPath, nil
+}
+
 // Stringer for Gallery
 func (g Gallery) String() string {
 	return fmt.Sprintf("\nGallery filepath: %v\nNumber of albums: %v", g.FullPath, len(g.Albums))
