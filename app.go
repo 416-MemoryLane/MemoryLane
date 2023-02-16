@@ -22,6 +22,13 @@ func main() {
 	// 	l.Printf(a)
 	// }
 
+	// a, err := g.DeleteAlbum("gallery")
+	// if err != nil {
+	// 	l.Println("Error deleting album:", err)
+	// } else {
+	// 	l.Printf(a)
+	// }
+
 	l.Printf("%v", g)
 
 	// Most likely will want to reconcile gallery with other nodes here
