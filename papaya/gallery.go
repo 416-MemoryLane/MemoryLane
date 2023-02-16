@@ -55,6 +55,7 @@ func (g *Gallery) CreateAlbum(album string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	g.l.Printf("New album created: %v", album)
 
 	i, err := os.Stat(albumPath)
 	if err != nil {
