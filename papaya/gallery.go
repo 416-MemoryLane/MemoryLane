@@ -21,7 +21,7 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 		l.Printf("Gallery at %s does not exist", relPath)
 		l.Printf("Creating a new gallery at %s", relPath)
 
-		err = os.Mkdir(relPath, fs.ModeDir)
+		err = os.Mkdir(relPath, 0777)
 		if err != nil {
 			return nil, err
 		}
