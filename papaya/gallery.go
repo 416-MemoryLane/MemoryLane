@@ -31,12 +31,8 @@ func NewGallery(l *log.Logger, relPath string) (*Gallery, error) {
 
 	var a Albums = &map[string]*Album{}
 	for _, e := range d {
-		i, err := e.Info()
-		if err != nil {
-			return nil, err
-		}
-
-		(*a)[e.Name()] = &Album{e.Name(), e.Type(), i}
+		var p Photos = &map[string]bool{}
+		(*a)[e.Name()] = &Album{e.Name(), p}
 	}
 
 	wd, err := os.Getwd()
@@ -64,12 +60,9 @@ func (g *Gallery) CreateAlbum(album string) (string, error) {
 		return "", err
 	}
 	e := fs.FileInfoToDirEntry(i)
-	info, err := e.Info()
-	if err != nil {
-		return "", err
-	}
 
-	(*g.Albums)[e.Name()] = &Album{e.Name(), e.Type(), info}
+	var p Photos = &map[string]bool{}
+	(*g.Albums)[e.Name()] = &Album{e.Name(), p}
 
 	return albumPath, nil
 }
