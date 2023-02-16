@@ -2,8 +2,10 @@ package papaya
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -91,6 +93,46 @@ func (g *Gallery) DeleteAlbum(album string) (string, error) {
 	g.l.Printf("Album deleted: %v", album)
 
 	return albumPath, err
+}
+
+// Add a photo to an album
+func (g *Gallery) AddPhoto(album string, photo Photo) (Photo, error) {
+	albumPath := fmt.Sprintf("%v/%v", g.RelPath, album)
+
+	_, err := os.Stat(albumPath)
+	if err != nil {
+		return "", err
+	}
+
+	url := "https://i.imgur.com/phzB4jR.png"
+	res, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	photoPath := fmt.Sprintf("%v/%v.png", albumPath, photo)
+	_, err = os.Stat(photoPath)
+	if err == nil {
+		return "", ErrPhotoExists
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+
+	f, err := os.Create(photoPath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	g.l.Printf("New photo added to %v: %v", album, photo)
+
+	return photo, nil
 }
 
 // Stringer for Gallery
