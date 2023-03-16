@@ -32,6 +32,7 @@ func main() {
 	// note:
 	//	- that the port is set to 0, which means that the OS will assign a random port
 	//  - the ip is set to 127.0.0.1 but will be the ip of the node in the network (public ip of computer)
+	// node, err := libp2p.New()
 	node, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"))
 	if err != nil {
 		panic(err)
@@ -39,7 +40,11 @@ func main() {
 	// defer the close of the network connection
 	defer node.Close()
 
-	fmt.Println("Listening addresses (IP-multiaddr):", node.Addrs())
+	addrs := node.Addrs()
+	fmt.Println("Listening on (IP-multiaddrs):")
+	for _, addr := range addrs {
+		fmt.Printf("\t%s\n", addr.String())
+	}
 	fmt.Println("Peer ID:", node.ID())
 
 	// Setup Stream Handlers
