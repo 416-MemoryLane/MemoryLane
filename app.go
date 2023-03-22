@@ -32,8 +32,7 @@ func main() {
 	// note:
 	//	- that the port is set to 0, which means that the OS will assign a random port
 	//  - the ip is set to 127.0.0.1 but will be the ip of the node in the network (public ip of computer)
-	// node, err := libp2p.New()
-	node, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"))
+	node, err := libp2p.New()
 	if err != nil {
 		panic(err)
 	}
@@ -43,6 +42,10 @@ func main() {
 	addrs := node.Addrs()
 	fmt.Println("Listening on (IP-multiaddrs):")
 	for _, addr := range addrs {
+		// TODO: out of the range of addresses, must use the ip4/<ip>/tcp/<port> that is NOT the following:
+		//			 - /ip4/127.0.0.1/<tcp/udp>/<port>
+		//			 - anything ip6
+		// 	     in other words, use the multiaddr that is ip4 and not using of 127.0.0.1
 		fmt.Printf("\t%s\n", addr.String())
 	}
 	fmt.Println("Peer ID:", node.ID())
