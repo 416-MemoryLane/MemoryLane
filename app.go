@@ -33,7 +33,18 @@ func main() {
 	//	- that the port is set to 0, which means that the OS will assign a random port
 	//  - the ip is set to 127.0.0.1 but will be the ip of the node in the network (public ip of computer)
 	// node, err := libp2p.New()
-	node, err := libp2p.New(libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"))
+	ip := "184.65.66.130"
+	port := "8080"
+	ma, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%s", ip, port))
+	addressFactory := func(addrs []multiaddr.Multiaddr) []multiaddr.Multiaddr {
+		return append(addrs, ma)
+	}
+
+	opts := []libp2p.Option{
+		libp2p.AddrsFactory(addressFactory),
+	}
+
+	node, err := libp2p.New(opts[0])
 	if err != nil {
 		panic(err)
 	}
