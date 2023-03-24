@@ -5,8 +5,10 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -28,10 +30,7 @@ func main() {
 	peerAddr := flag.String("peer-address", "", "peer address")
 	flag.Parse()
 
-	// start a libp2p node with default settings and restricting it to IPv4 over 127.0.0.1 (only can communicate with nodes on same machine)
-	// note:
-	//	- that the port is set to 0, which means that the OS will assign a random port
-	//  - the ip is set to 127.0.0.1 but will be the ip of the node in the network (public ip of computer)
+	// start a libp2p node
 	node, err := libp2p.New()
 	if err != nil {
 		panic(err)
@@ -42,11 +41,21 @@ func main() {
 	addrs := node.Addrs()
 	fmt.Println("Listening on (IP-multiaddrs):")
 	for _, addr := range addrs {
-		// TODO: out of the range of addresses, must use the ip4/<ip>/tcp/<port> that is NOT the following:
-		//			 - /ip4/127.0.0.1/<tcp/udp>/<port>
-		//			 - anything ip6
-		// 	     in other words, use the multiaddr that is ip4 and not using of 127.0.0.1
 		fmt.Printf("\t%s\n", addr.String())
+	}
+
+	// Extract private address to send to Galactus
+	var privateAddrs []multiaddr.Multiaddr
+	for _, addr := range addrs {
+		addrStr := addr.String()
+		addrSplit := strings.Split(addrStr, "/")
+		if addrSplit[1] == "ip4" && addrSplit[3] == "tcp" {
+			ip := net.ParseIP(addrSplit[2])
+			if ip != nil && ip.IsPrivate() {
+				privateAddrs = append(privateAddrs, addr)
+				fmt.Println("Private Address:", addrStr)
+			}
+		}
 	}
 	fmt.Println("Peer ID:", node.ID())
 
