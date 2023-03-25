@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"encoding/binary"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
@@ -10,13 +10,18 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/libp2p/go-libp2p"
 	network "github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 )
+
+type CrdtStruct struct {
+	Name     string
+	Commands []string
+	Image    []byte
+}
 
 const protocolID = "pingPongCounter"
 
@@ -58,12 +63,17 @@ func main() {
 		}
 	}
 	fmt.Println("Peer ID:", node.ID())
-
+	fmt.Println("Adress to connect to:", privateAddrs[0].String()+"/p2p/"+node.ID().String())
 	// Setup Stream Handlers
 	// This gets called when peer connects and opens a stream to this node
 	node.SetStreamHandler(protocolID, func(s network.Stream) {
-		go writeCounter(s)
-		go readCounter(s)
+		go readCRDT(s)
+		crdtExample := CrdtStruct{
+			Name:     fmt.Sprintf("CRDT of PeerId %s", node.ID()),
+			Commands: []string{"delete photo"},
+			Image:    []byte{0x01, 0x02, 0x03, 0x04},
+		}
+		go writeCRDT(s, crdtExample)
 	})
 
 	// Todo: remove the peer-address flag and use Galactus information for connection
@@ -92,8 +102,13 @@ func main() {
 		}
 
 		// Start the write and read threads
-		go writeCounter(s)
-		go readCounter(s)
+		go readCRDT(s)
+		crdtExample := CrdtStruct{
+			Name:     fmt.Sprintf("CRDT of PeerId %s", node.ID()),
+			Commands: []string{"add photo", "delete photo", "delete photo"},
+			Image:    []byte{0x01, 0x02, 0x03, 0x04},
+		}
+		go writeCRDT(s, crdtExample)
 	}
 
 	// wait for a SIGINT or SIGTERM signal (ctrl + c)
@@ -107,31 +122,48 @@ func main() {
 	}
 }
 
+/* Util Methods */
+
 // Send and Receive Data
-// Continue to send and receive a counter value until one of the nodes is killed
-func writeCounter(s network.Stream) {
-	var counter uint64
-
-	for {
-		<-time.After(time.Second)
-		counter++
-
-		err := binary.Write(s, binary.BigEndian, counter)
-		if err != nil {
-			panic(err)
-		}
+func writeCRDT(s network.Stream, crdt CrdtStruct) {
+	err := sendCRDT(crdt, s)
+	if err != nil {
+		panic(err)
 	}
 }
 
-func readCounter(s network.Stream) {
+func readCRDT(s network.Stream) {
+	fmt.Println("Reading from stream")
 	for {
-		var counter uint64
-
-		err := binary.Read(s, binary.BigEndian, &counter)
+		crdt, err := receiveCRDT(s)
 		if err != nil {
 			panic(err)
 		}
-
-		fmt.Printf("Received %d from %s\n", counter, s.ID())
+		// todo: process crdt
+		fmt.Println("Processing CRDT", crdt)
 	}
+}
+
+func sendCRDT(crdt CrdtStruct, s network.Stream) error {
+	data, err := json.Marshal(crdt)
+	if err != nil {
+		return err
+	}
+	_, err = s.Write(data)
+	fmt.Printf("Sending %s\n", string(data))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func receiveCRDT(s network.Stream) (CrdtStruct, error) {
+	var crdt CrdtStruct
+	err := json.NewDecoder(s).Decode(&crdt)
+	if err != nil {
+		return crdt, err
+	}
+	jsonCRDT, _ := json.Marshal(crdt)
+	fmt.Printf("Received %s\n", jsonCRDT)
+	return crdt, nil
 }
