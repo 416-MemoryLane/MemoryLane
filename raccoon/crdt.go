@@ -3,7 +3,6 @@ package raccoon
 import "log"
 
 type CRDT struct {
-	// TODO: must add album when Papaya is added
 	Added   *map[string]bool
 	Deleted *map[string]bool
 
