@@ -27,14 +27,18 @@ func (c *CRDT) DeletePhoto(fn string) {
 	(*c.deleted)[fn] = true
 }
 
-func (c *CRDT) Reconcile(crdt *CRDT) *CRDT {
+func (c *CRDT) Reconcile(crdt *CRDT) (*CRDT, bool) {
+	isChanged := false
+
 	for k := range *crdt.added {
 		c.AddPhoto(k)
+		isChanged = true
 	}
 
 	for k := range *crdt.deleted {
 		c.DeletePhoto(k)
+		isChanged = true
 	}
 
-	return c
+	return c, isChanged
 }
