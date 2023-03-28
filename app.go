@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
+	"memory-lane/app/raccoon"
 	"net"
 	"os"
 	"os/signal"
@@ -31,6 +33,10 @@ const protocolID = "pingPongCounter"
 // TODO: perform necessary operations/routines with connected nodes (e.g. sync the albums, add/delete images etc.)
 // TODO: probably need some better error handling
 func main() {
+	l := log.New(os.Stdout, "memory-lane ", log.LstdFlags)
+	crdt := raccoon.NewCRDT(l)
+	l.Println("CRDT initialized", crdt)
+
 	// Add -peer-address flag (this is currently given as a command line argument but will be provided by Galactus)
 	peerAddr := flag.String("peer-address", "", "peer address")
 	flag.Parse()
