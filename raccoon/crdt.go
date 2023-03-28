@@ -4,8 +4,8 @@ import "log"
 
 type CRDT struct {
 	// TODO: must add album when Papaya is added
-	added   *map[string]bool
-	deleted *map[string]bool
+	Added   *map[string]bool
+	Deleted *map[string]bool
 
 	l *log.Logger
 }
@@ -19,23 +19,23 @@ func NewCRDT(l *log.Logger) *CRDT {
 }
 
 func (c *CRDT) AddPhoto(fn string) {
-	(*c.added)[fn] = true
+	(*c.Added)[fn] = true
 }
 
 func (c *CRDT) DeletePhoto(fn string) {
-	delete(*c.added, fn)
-	(*c.deleted)[fn] = true
+	delete(*c.Added, fn)
+	(*c.Deleted)[fn] = true
 }
 
 func (c *CRDT) Reconcile(crdt *CRDT) (*CRDT, bool) {
 	isChanged := false
 
-	for k := range *crdt.added {
+	for k := range *crdt.Added {
 		c.AddPhoto(k)
 		isChanged = true
 	}
 
-	for k := range *crdt.deleted {
+	for k := range *crdt.Deleted {
 		c.DeletePhoto(k)
 		isChanged = true
 	}
