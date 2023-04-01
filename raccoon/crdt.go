@@ -8,38 +8,41 @@ import (
 )
 
 type CRDT struct {
-	Added   *map[uuid.UUID]bool `json:"-"`
-	Deleted *map[uuid.UUID]bool `json:"-"`
+	Added   *map[PhotoId]bool `json:"-"`
+	Deleted *map[PhotoId]bool `json:"-"`
 
-	Id          uuid.UUID    `json:"id"`
-	AddedList   *[]uuid.UUID `json:"added"`
-	DeletedList *[]uuid.UUID `json:"deleted"`
+	Album       AlbumId    `json:"album"`
+	AddedList   *[]PhotoId `json:"added"`
+	DeletedList *[]PhotoId `json:"deleted"`
 
 	l *log.Logger
 }
 
+type AlbumId uuid.UUID
+type PhotoId uuid.UUID
+
 func NewCRDT(l *log.Logger) *CRDT {
 	// Generate a new UUID
-	id := uuid.New()
+	album := AlbumId(uuid.New())
 
 	return &CRDT{
-		&map[uuid.UUID]bool{},
-		&map[uuid.UUID]bool{},
+		&map[PhotoId]bool{},
+		&map[PhotoId]bool{},
 
-		id,
-		&[]uuid.UUID{},
-		&[]uuid.UUID{},
+		album,
+		&[]PhotoId{},
+		&[]PhotoId{},
 		l,
 	}
 }
 
-func (c *CRDT) AddPhoto(fn uuid.UUID) {
-	(*c.Added)[fn] = true
+func (c *CRDT) AddPhoto(p PhotoId) {
+	(*c.Added)[p] = true
 }
 
-func (c *CRDT) DeletePhoto(fn uuid.UUID) {
-	delete(*c.Added, fn)
-	(*c.Deleted)[fn] = true
+func (c *CRDT) DeletePhoto(p PhotoId) {
+	delete(*c.Added, p)
+	(*c.Deleted)[p] = true
 }
 
 func (c *CRDT) Reconcile(crdt *CRDT) (*CRDT, bool) {
@@ -62,8 +65,8 @@ func (c *CRDT) UnmarshalJSON(d []byte) error {
 	type CRDTAlias CRDT
 	aux := &struct {
 		*CRDTAlias
-		AddedList   *[]uuid.UUID `json:"added"`
-		DeletedList *[]uuid.UUID `json:"deleted"`
+		AddedList   *[]PhotoId `json:"added"`
+		DeletedList *[]PhotoId `json:"deleted"`
 	}{
 		CRDTAlias: (*CRDTAlias)(c),
 	}
@@ -82,8 +85,8 @@ func (c *CRDT) MarshalJSON() ([]byte, error) {
 	type CRDTAlias CRDT
 	return json.Marshal(&struct {
 		*CRDTAlias
-		AddedList   *[]uuid.UUID `json:"added"`
-		DeletedList *[]uuid.UUID `json:"deleted"`
+		AddedList   *[]PhotoId `json:"added"`
+		DeletedList *[]PhotoId `json:"deleted"`
 	}{
 		CRDTAlias:   (*CRDTAlias)(c),
 		AddedList:   listFromMap(c.Added),
@@ -91,16 +94,16 @@ func (c *CRDT) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func listFromMap(m *map[uuid.UUID]bool) *[]uuid.UUID {
-	l := make([]uuid.UUID, 0, len(*m))
+func listFromMap(m *map[PhotoId]bool) *[]PhotoId {
+	l := make([]PhotoId, 0, len(*m))
 	for k := range *m {
 		l = append(l, k)
 	}
 	return &l
 }
 
-func mapFromList(l *[]uuid.UUID) *map[uuid.UUID]bool {
-	m := make(map[uuid.UUID]bool, len(*l))
+func mapFromList(l *[]PhotoId) *map[PhotoId]bool {
+	m := make(map[PhotoId]bool, len(*l))
 	for _, k := range *l {
 		m[k] = true
 	}
