@@ -3,12 +3,15 @@ package raccoon
 import (
 	"encoding/json"
 	"log"
+
+	"github.com/google/uuid"
 )
 
 type CRDT struct {
 	Added   *map[string]bool `json:"-"`
 	Deleted *map[string]bool `json:"-"`
 
+	Id          uuid.UUID `json:"id"`
 	AddedList   *[]string `json:"added"`
 	DeletedList *[]string `json:"deleted"`
 
@@ -16,9 +19,14 @@ type CRDT struct {
 }
 
 func NewCRDT(l *log.Logger) *CRDT {
+	// Generate a new UUID
+	id := uuid.New()
+
 	return &CRDT{
 		&map[string]bool{},
 		&map[string]bool{},
+
+		id,
 		&[]string{},
 		&[]string{},
 		l,
