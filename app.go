@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"memory-lane/app/raccoon"
+	"memory-lane/app/papaya"
 	"net"
 	"os"
 	"os/signal"
@@ -34,8 +34,12 @@ const protocolID = "pingPongCounter"
 // TODO: probably need some better error handling
 func main() {
 	l := log.New(os.Stdout, "memory-lane ", log.LstdFlags)
-	crdt := raccoon.NewCRDT(l)
-	l.Println("CRDT initialized", crdt)
+	_, err := papaya.NewGallery(l)
+	if err != nil {
+		l.Fatal("error while instantiating gallery", err)
+	}
+
+	l.Println("Gallery initialized")
 
 	// Add -peer-address flag (this is currently given as a command line argument but will be provided by Galactus)
 	peerAddr := flag.String("peer-address", "", "peer address")
