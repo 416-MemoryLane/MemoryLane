@@ -8,12 +8,12 @@ import (
 )
 
 type CRDT struct {
-	Added   *map[string]bool `json:"-"`
-	Deleted *map[string]bool `json:"-"`
+	Added   *map[uuid.UUID]bool `json:"-"`
+	Deleted *map[uuid.UUID]bool `json:"-"`
 
-	Id          uuid.UUID `json:"id"`
-	AddedList   *[]string `json:"added"`
-	DeletedList *[]string `json:"deleted"`
+	Id          uuid.UUID    `json:"id"`
+	AddedList   *[]uuid.UUID `json:"added"`
+	DeletedList *[]uuid.UUID `json:"deleted"`
 
 	l *log.Logger
 }
@@ -23,21 +23,21 @@ func NewCRDT(l *log.Logger) *CRDT {
 	id := uuid.New()
 
 	return &CRDT{
-		&map[string]bool{},
-		&map[string]bool{},
+		&map[uuid.UUID]bool{},
+		&map[uuid.UUID]bool{},
 
 		id,
-		&[]string{},
-		&[]string{},
+		&[]uuid.UUID{},
+		&[]uuid.UUID{},
 		l,
 	}
 }
 
-func (c *CRDT) AddPhoto(fn string) {
+func (c *CRDT) AddPhoto(fn uuid.UUID) {
 	(*c.Added)[fn] = true
 }
 
-func (c *CRDT) DeletePhoto(fn string) {
+func (c *CRDT) DeletePhoto(fn uuid.UUID) {
 	delete(*c.Added, fn)
 	(*c.Deleted)[fn] = true
 }
@@ -62,8 +62,8 @@ func (c *CRDT) UnmarshalJSON(d []byte) error {
 	type CRDTAlias CRDT
 	aux := &struct {
 		*CRDTAlias
-		AddedList   *[]string `json:"added"`
-		DeletedList *[]string `json:"deleted"`
+		AddedList   *[]uuid.UUID `json:"added"`
+		DeletedList *[]uuid.UUID `json:"deleted"`
 	}{
 		CRDTAlias: (*CRDTAlias)(c),
 	}
@@ -82,8 +82,8 @@ func (c *CRDT) MarshalJSON() ([]byte, error) {
 	type CRDTAlias CRDT
 	return json.Marshal(&struct {
 		*CRDTAlias
-		AddedList   *[]string `json:"added"`
-		DeletedList *[]string `json:"deleted"`
+		AddedList   *[]uuid.UUID `json:"added"`
+		DeletedList *[]uuid.UUID `json:"deleted"`
 	}{
 		CRDTAlias:   (*CRDTAlias)(c),
 		AddedList:   listFromMap(c.Added),
@@ -91,16 +91,16 @@ func (c *CRDT) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func listFromMap(m *map[string]bool) *[]string {
-	l := make([]string, 0, len(*m))
+func listFromMap(m *map[uuid.UUID]bool) *[]uuid.UUID {
+	l := make([]uuid.UUID, 0, len(*m))
 	for k := range *m {
 		l = append(l, k)
 	}
 	return &l
 }
 
-func mapFromList(l *[]string) *map[string]bool {
-	m := make(map[string]bool, len(*l))
+func mapFromList(l *[]uuid.UUID) *map[uuid.UUID]bool {
+	m := make(map[uuid.UUID]bool, len(*l))
 	for _, k := range *l {
 		m[k] = true
 	}
