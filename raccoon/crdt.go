@@ -22,18 +22,25 @@ type AlbumId uuid.UUID
 type PhotoId uuid.UUID
 
 func NewCRDT(l *log.Logger) *CRDT {
-	// Generate a new UUID
-	album := AlbumId(uuid.New())
-
 	return &CRDT{
 		&map[PhotoId]bool{},
 		&map[PhotoId]bool{},
 
-		album,
+		NewAlbumId(),
 		&[]PhotoId{},
 		&[]PhotoId{},
 		l,
 	}
+}
+
+// Generate new id for a new album
+func NewAlbumId() AlbumId {
+	return AlbumId(uuid.New())
+}
+
+// Generate new id for a new photo
+func NewPhotoId() PhotoId {
+	return PhotoId(uuid.New())
 }
 
 func (c *CRDT) AddPhoto(p PhotoId) {
