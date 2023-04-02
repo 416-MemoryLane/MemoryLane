@@ -5,6 +5,7 @@ import (
 	"log"
 	"memory-lane/app/raccoon"
 	"os"
+	"path/filepath"
 )
 
 type Gallery struct {
@@ -14,6 +15,8 @@ type Gallery struct {
 
 // Initialize a new gallery based on existing gallery in filesystem or create a new one if one doesn't exist
 func NewGallery(l *log.Logger) (*Gallery, error) {
+	gallery := &Gallery{l, &map[string]*Album{}}
+
 	// Define the path to the gallery directory
 	galleryDir := "./memory-lane-gallery"
 
@@ -21,8 +24,70 @@ func NewGallery(l *log.Logger) (*Gallery, error) {
 	_, err := os.Stat(galleryDir)
 	if err == nil {
 		// If the directory exists, use the contents of the gallery to instantiate a new gallery
-		// TODO:
-		return nil, nil
+		// for each album, instantiate an album and CRDT
+		d, err := os.Open(galleryDir)
+		if err != nil {
+			return nil, err
+		}
+		defer d.Close()
+
+		// Read all directories
+		dirs, err := d.Readdir(-1)
+		if err != nil {
+			return nil, err
+		}
+
+		albums := &map[string]*Album{}
+		gallery.Albums = albums
+		for _, dir := range dirs {
+			if dir.IsDir() {
+				// Instantiate new album
+				dirName := dir.Name()
+				crdt := &raccoon.CRDT{}
+				photos := &map[string]bool{}
+				album := &Album{crdt, photos}
+				(*albums)[dirName] = album
+
+				// Read all photos and CRDT to use to instantiate
+				albumDir := filepath.Join(galleryDir, dirName)
+				files, err := os.ReadDir(albumDir)
+				if err != nil {
+					return nil, err
+				}
+
+				for _, file := range files {
+					fileName := file.Name()
+					filePath := filepath.Join(albumDir, fileName)
+
+					// Read the contents of the file
+					data, err := os.ReadFile(filePath)
+					if err != nil {
+						return nil, err
+					}
+
+					if fileName == "crdt.json" {
+						// If crdt.json, deserialize to CRDT struct
+						crdt, err = raccoon.NewCRDT(l)
+						if err != nil {
+							return nil, err
+						}
+						err = crdt.UnmarshalJSON(data)
+						if err != nil {
+							return nil, err
+						}
+
+						// Must add to album.Crdt here even though its pointer has been added to the album
+						album.Crdt = crdt
+
+					} else {
+						// Else add to album's map of photos
+						(*photos)[fileName] = true
+					}
+				}
+			}
+		}
+
+		return gallery, nil
 	}
 
 	// If the directory doesn't exist, create a new gallery directory and an empty album map
@@ -30,7 +95,7 @@ func NewGallery(l *log.Logger) (*Gallery, error) {
 	if err != nil {
 		return nil, err
 	}
-	gallery := &Gallery{l, &map[raccoon.AlbumId]*Album{}}
+
 	return gallery, nil
 }
 

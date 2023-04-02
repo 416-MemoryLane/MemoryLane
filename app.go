@@ -34,12 +34,11 @@ const protocolID = "pingPongCounter"
 // TODO: probably need some better error handling
 func main() {
 	l := log.New(os.Stdout, "memory-lane ", log.LstdFlags)
-	_, err := papaya.NewGallery(l)
+	gallery, err := papaya.NewGallery(l)
 	if err != nil {
 		l.Fatal("error while instantiating gallery: ", err)
 	}
-
-	l.Println("Gallery initialized")
+	l.Println(gallery)
 
 	// Add -peer-address flag (this is currently given as a command line argument but will be provided by Galactus)
 	peerAddr := flag.String("peer-address", "", "peer address")
