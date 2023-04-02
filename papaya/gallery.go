@@ -214,11 +214,40 @@ func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
 }
 
 // Delete a photo from an album
-// TODO: fix return value
-func (g *Gallery) DeletePhoto(aid string, pid string) (interface{}, error) {
-	// Must also update the CRDT in the filesystem
+func (g *Gallery) DeletePhoto(aid string, pid string) (string, error) {
+	album := (*g.Albums)[aid]
+	if album == nil {
+		return "", fmt.Errorf("album %s does not exist", aid)
+	}
 
-	return nil, nil
+	photo := (*album.Photos)[pid]
+	if !photo {
+		return "", fmt.Errorf("photo %s does not exist", pid)
+	}
+
+	// Delete album from filesystem
+	photoFile := filepath.Join(GALLERY_DIR, aid, pid)
+	err := os.Remove(photoFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to delete photo %s: %w", photoFile, err)
+	}
+
+	// Remove photo from CRDT and write to file
+	album.Crdt.DeletePhoto(pid)
+	crdtFile := filepath.Join(GALLERY_DIR, aid, "crdt.json")
+	jsonData, err := album.Crdt.MarshalJSON()
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal JSON data: %w", err)
+	}
+	err = os.WriteFile(crdtFile, jsonData, 0777)
+	if err != nil {
+		return "", fmt.Errorf("failed to write file %s: %w", crdtFile, err)
+	}
+
+	// Remove photo from Album
+	delete(*album.Photos, pid)
+
+	return pid, nil
 }
 
 // Retrieve all the photos of an album
