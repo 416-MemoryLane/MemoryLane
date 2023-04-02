@@ -1,11 +1,16 @@
 package papaya
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"image/png"
 	"log"
 	"memory-lane/app/raccoon"
 	"os"
 	"path/filepath"
+
+	"github.com/google/uuid"
 )
 
 type Gallery struct {
@@ -163,12 +168,49 @@ func (g *Gallery) GetAlbum(aid string) *Album {
 	return (*g.Albums)[aid]
 }
 
-// Add a photo to an album
-// TODO: fix return value
-func (g *Gallery) AddPhoto(aid string, photo []byte) (interface{}, error) {
-	// Must also update the CRDT in the filesystem
+// Add a photo to an album if the album exists
+func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
+	album := (*g.Albums)[aid]
+	if album == nil {
+		return "", fmt.Errorf("album %s does not exist", aid)
+	}
 
-	return nil, nil
+	// Decode the image bytes into an image
+	p, _, err := image.Decode(bytes.NewReader(photo))
+	if err != nil {
+		return "", fmt.Errorf("failed to convert bytes to img: %w", err)
+	}
+
+	// Create a new file to save the image
+	pid := fmt.Sprintf("%s.png", uuid.New().String())
+	photoFile := filepath.Join(GALLERY_DIR, aid, pid)
+	f, err := os.Create(photoFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert bytes to img: %w", err)
+	}
+	defer f.Close()
+
+	// Encode the photo to png and write it to the file
+	if err := png.Encode(f, p); err != nil {
+		return "", fmt.Errorf("failed to encode to png: %w", err)
+	}
+
+	// Add photo to CRDT and write to file
+	album.Crdt.AddPhoto(pid)
+	crdtFile := filepath.Join(GALLERY_DIR, aid, "crdt.json")
+	jsonData, err := album.Crdt.MarshalJSON()
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal JSON data: %w", err)
+	}
+	err = os.WriteFile(crdtFile, jsonData, 0777)
+	if err != nil {
+		return "", fmt.Errorf("failed to write file %s: %w", crdtFile, err)
+	}
+
+	// Add photo to the Album
+	(*album.Photos)[pid] = true
+
+	return pid, nil
 }
 
 // Delete a photo from an album
