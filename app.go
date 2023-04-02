@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"memory-lane/app/papaya"
@@ -48,11 +47,15 @@ func main() {
 	})
 	l.Println("Listening on:", multiAddr)
 
-	peerAddr := flag.String("peer-address", "", "peer address")
-	flag.Parse()
-	if *peerAddr != "" {
+	// TODO: should replace with multiaddrs received from Galactus
+	peerAddrs := []string{
+		"/ip4/172.28.67.129/tcp/36939/p2p/12D3KooWNyuw9KoSJDRnGbDoD89mEuEKB3yfmChNb5EQdbTo2A6k",
+		"/ip4/172.28.67.129/tcp/46027/p2p/12D3KooWHNRNVUKS83R29AsRAGFwtk8sf9axJLb5wwr1XKWtvKNt",
+	}
+
+	for _, addr := range peerAddrs {
 		// Parse the multiaddr string.
-		peerMA, err := multiaddr.NewMultiaddr(*peerAddr)
+		peerMA, err := multiaddr.NewMultiaddr(addr)
 		if err != nil {
 			l.Fatalf("failed parsing to peerMA: %v", err)
 		}
@@ -80,19 +83,21 @@ func main() {
 			l.Fatalf("failed encoding message: %v", err)
 		}
 
-		msgNum := 1
-		ticker := time.NewTicker(3 * time.Second)
-		for range ticker.C {
-			d.Message = fmt.Sprintf("Message: %v", msgNum)
+		go func() {
+			msgNum := 1
+			ticker := time.NewTicker(3 * time.Second)
+			for range ticker.C {
+				d.Message = fmt.Sprintf("Message: %v", msgNum)
 
-			if err = encoder.Encode(&d); err != nil {
-				l.Printf("failed encoding message: %v\n", err)
-				continue
+				if err = encoder.Encode(&d); err != nil {
+					l.Printf("failed encoding message: %v\n", err)
+					continue
+				}
+
+				l.Println("sent msg:", d.Message)
+				msgNum++
 			}
-
-			l.Println("sent msg:", d.Message)
-			msgNum++
-		}
+		}()
 	}
 
 	// wait for a SIGINT or SIGTERM signal (ctrl + c)
