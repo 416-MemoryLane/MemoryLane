@@ -7,4 +7,4 @@ type Album struct {
 	Photos Photos
 }
 
-type Albums *map[raccoon.AlbumId]*Album
+type Albums *map[string]*Album

@@ -2,19 +2,20 @@ package raccoon
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
 )
 
 type CRDT struct {
-	Added   *map[PhotoId]bool `json:"-"`
-	Deleted *map[PhotoId]bool `json:"-"`
+	Added   *map[string]bool `json:"-"`
+	Deleted *map[string]bool `json:"-"`
 
-	Album       AlbumId    `json:"album"`
-	AlbumName   string     `json:"album_name"`
-	AddedList   *[]PhotoId `json:"added"`
-	DeletedList *[]PhotoId `json:"deleted"`
+	Album       string    `json:"album"`
+	AlbumName   string    `json:"album_name"`
+	AddedList   *[]string `json:"added"`
+	DeletedList *[]string `json:"deleted"`
 
 	l *log.Logger
 }
@@ -35,13 +36,13 @@ func (aid PhotoId) String() string {
 
 func NewCRDT(l *log.Logger) (*CRDT, error) {
 	c := CRDT{
-		&map[PhotoId]bool{},
-		&map[PhotoId]bool{},
+		&map[string]bool{},
+		&map[string]bool{},
 
-		NewAlbumId(),
+		uuid.New().String(),
 		"",
-		&[]PhotoId{},
-		&[]PhotoId{},
+		&[]string{},
+		&[]string{},
 		l,
 	}
 
@@ -72,13 +73,13 @@ func idFromString(s string) uuid.UUID {
 	return uuid.Must(uuid.Parse(s))
 }
 
-func (c *CRDT) AddPhoto(p PhotoId) {
-	(*c.Added)[p] = true
+func (c *CRDT) AddPhoto(pid string) {
+	(*c.Added)[pid] = true
 }
 
-func (c *CRDT) DeletePhoto(p PhotoId) {
-	delete(*c.Added, p)
-	(*c.Deleted)[p] = true
+func (c *CRDT) DeletePhoto(pid string) {
+	delete(*c.Added, pid)
+	(*c.Deleted)[pid] = true
 }
 
 func (c *CRDT) Reconcile(crdt *CRDT) (*CRDT, bool) {
@@ -101,8 +102,8 @@ func (c *CRDT) UnmarshalJSON(d []byte) error {
 	type CRDTAlias CRDT
 	aux := &struct {
 		*CRDTAlias
-		AddedList   *[]PhotoId `json:"added"`
-		DeletedList *[]PhotoId `json:"deleted"`
+		AddedList   *[]string `json:"added"`
+		DeletedList *[]string `json:"deleted"`
 	}{
 		CRDTAlias: (*CRDTAlias)(c),
 	}
@@ -121,8 +122,8 @@ func (c *CRDT) MarshalJSON() ([]byte, error) {
 	type CRDTAlias CRDT
 	return json.Marshal(&struct {
 		*CRDTAlias
-		AddedList   *[]PhotoId `json:"added"`
-		DeletedList *[]PhotoId `json:"deleted"`
+		AddedList   *[]string `json:"added"`
+		DeletedList *[]string `json:"deleted"`
 	}{
 		CRDTAlias:   (*CRDTAlias)(c),
 		AddedList:   listFromMap(c.Added),
@@ -130,18 +131,24 @@ func (c *CRDT) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func listFromMap(m *map[PhotoId]bool) *[]PhotoId {
-	l := make([]PhotoId, 0, len(*m))
+func listFromMap(m *map[string]bool) *[]string {
+	l := make([]string, 0, len(*m))
 	for k := range *m {
 		l = append(l, k)
 	}
 	return &l
 }
 
-func mapFromList(l *[]PhotoId) *map[PhotoId]bool {
-	m := make(map[PhotoId]bool, len(*l))
+func mapFromList(l *[]string) *map[string]bool {
+	m := make(map[string]bool, len(*l))
 	for _, k := range *l {
 		m[k] = true
 	}
 	return &m
+}
+
+// Stringer for CRDT
+func (c CRDT) String() string {
+	return fmt.Sprintf("CRDT{Album: %s, AlbumName: %s, Added: %v, Deleted: %v}",
+		c.Album, c.AlbumName, *c.Added, *c.Deleted)
 }
