@@ -49,30 +49,6 @@ func NewCRDT(l *log.Logger) (*CRDT, error) {
 	return &c, nil
 }
 
-// Generate new id for a new album
-func NewAlbumId() AlbumId {
-	return AlbumId(uuid.New())
-}
-
-// Generate new id for a new photo
-func NewPhotoId() PhotoId {
-	return PhotoId(uuid.New())
-}
-
-// Return PhotoId from provided uuid string
-func PhotoIdFromString(s string) PhotoId {
-	return PhotoId(idFromString(s))
-}
-
-// Return AlbumId from provided uuid string
-func AlbumIdFromString(s string) AlbumId {
-	return AlbumId(idFromString(s))
-}
-
-func idFromString(s string) uuid.UUID {
-	return uuid.Must(uuid.Parse(s))
-}
-
 func (c *CRDT) AddPhoto(pid string) {
 	(*c.Added)[pid] = true
 }
