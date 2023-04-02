@@ -12,6 +12,7 @@ type CRDT struct {
 	Deleted *map[PhotoId]bool `json:"-"`
 
 	Album       AlbumId    `json:"album"`
+	AlbumName   string     `json:"album_name"`
 	AddedList   *[]PhotoId `json:"added"`
 	DeletedList *[]PhotoId `json:"deleted"`
 
@@ -19,18 +20,32 @@ type CRDT struct {
 }
 
 type AlbumId uuid.UUID
+
+// Convert the AlbumId to string
+func (aid AlbumId) String() string {
+	return uuid.UUID(aid).String()
+}
+
 type PhotoId uuid.UUID
 
-func NewCRDT(l *log.Logger) *CRDT {
-	return &CRDT{
+// Convert the PhotoId to string
+func (aid PhotoId) String() string {
+	return uuid.UUID(aid).String()
+}
+
+func NewCRDT(l *log.Logger) (*CRDT, error) {
+	c := CRDT{
 		&map[PhotoId]bool{},
 		&map[PhotoId]bool{},
 
 		NewAlbumId(),
+		"",
 		&[]PhotoId{},
 		&[]PhotoId{},
 		l,
 	}
+
+	return &c, nil
 }
 
 // Generate new id for a new album
@@ -41,6 +56,20 @@ func NewAlbumId() AlbumId {
 // Generate new id for a new photo
 func NewPhotoId() PhotoId {
 	return PhotoId(uuid.New())
+}
+
+// Return PhotoId from provided uuid string
+func PhotoIdFromString(s string) PhotoId {
+	return PhotoId(idFromString(s))
+}
+
+// Return AlbumId from provided uuid string
+func AlbumIdFromString(s string) AlbumId {
+	return AlbumId(idFromString(s))
+}
+
+func idFromString(s string) uuid.UUID {
+	return uuid.Must(uuid.Parse(s))
 }
 
 func (c *CRDT) AddPhoto(p PhotoId) {

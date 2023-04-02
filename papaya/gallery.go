@@ -61,28 +61,32 @@ func (g *Gallery) GetAlbum(album string) (Album, error) {
 	return Album{}, nil
 }
 
-// Add a picture to an album
-func (g *Gallery) AddPicture(aid string, picture Picture) (Picture, error) {
+// Add a photo to an album
+// TODO: fix return value
+func (g *Gallery) AddPhoto(aid string, photo []byte) (interface{}, error) {
 	// Must also update the CRDT in the filesystem
 
-	return Picture{}, nil
+	return nil, nil
 }
 
-// Delete a picture from an album
-func (g *Gallery) DeletePicture(aid string, pid string) (Picture, error) {
+// Delete a photo from an album
+// TODO: fix return value
+func (g *Gallery) DeletePhoto(aid string, pid string) (interface{}, error) {
 	// Must also update the CRDT in the filesystem
 
-	return Picture{}, nil
+	return nil, nil
 }
 
 // Retrieve all the photos of an album
-func (g *Gallery) GetPictures() (Pictures, error) {
+// TODO: fix return value
+func (g *Gallery) GetPhotos() (interface{}, error) {
 	return nil, nil
 }
 
 // Retrieve the photo from an album
-func (g *Gallery) GetPicture(aid string, pid string) (Picture, error) {
-	return Picture{}, nil
+// TODO: fix return value
+func (g *Gallery) GetPhoto(aid string, pid string) (interface{}, error) {
+	return nil, nil
 }
 
 // Stringer for Gallery
