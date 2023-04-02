@@ -159,11 +159,13 @@ func (g *Gallery) DeleteAlbum(aid string) error {
 }
 
 // Retrieve all the albums (i.e. directories of photos) that the user is part of
+// TODO: This should likely be just GetAlbumsIds or something like this, as we would only need them to send to Galactus
 func (g *Gallery) GetAlbums() Albums {
 	return g.Albums
 }
 
 // Get an album. Return nil if the album does not exist
+// TODO: This will likely be more complicated as it will be required to create the message to send to another node
 func (g *Gallery) GetAlbum(aid string) *Album {
 	return (*g.Albums)[aid]
 }
@@ -251,14 +253,14 @@ func (g *Gallery) DeletePhoto(aid string, pid string) (string, error) {
 }
 
 // Retrieve all the photos of an album
-// TODO: fix return value
-func (g *Gallery) GetPhotos() (interface{}, error) {
+// TODO: This will likely be more complicated as it will be required to create the message to send to another node
+func (g *Gallery) GetPhotos(aid string) ([][]byte, error) {
 	return nil, nil
 }
 
 // Retrieve the photo from an album
-// TODO: fix return value
-func (g *Gallery) GetPhoto(aid string, pid string) (interface{}, error) {
+// TODO: This will likely be more complicated as it will be required to create the message to send to another node
+func (g *Gallery) GetPhoto(aid string, pid string) ([]byte, error) {
 	return nil, nil
 }
 
