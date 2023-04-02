@@ -91,5 +91,5 @@ func (g *Gallery) GetPhoto(aid string, pid string) (interface{}, error) {
 
 // Stringer for Gallery
 func (g Gallery) String() string {
-	return fmt.Sprintf("\nNumber of albums: %v", len(*g.Albums))
+	return fmt.Sprintf("\nNumber of albums: %v, %v", len(*g.Albums), *g.Albums)
 }
