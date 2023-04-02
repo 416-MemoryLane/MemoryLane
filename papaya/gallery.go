@@ -13,6 +13,8 @@ type Gallery struct {
 	Albums Albums
 }
 
+const GALLERY_DIR = "./memory-lane-gallery"
+
 // Initialize a new gallery based on existing gallery in filesystem or create a new one if one doesn't exist
 func NewGallery(l *log.Logger) (*Gallery, error) {
 	gallery := &Gallery{l, &map[string]*Album{}}
@@ -99,13 +101,41 @@ func NewGallery(l *log.Logger) (*Gallery, error) {
 	return gallery, nil
 }
 
-// Create a new album if it doesn't exist
-func (g *Gallery) CreateAlbum(aid string) (string, error) {
-	// Must initialise a new CRDT and add it to the filesystem
-	// Must create a new directory for its photos
-	// Must create a new entry for Galactus
+// Create a new album
+func (g *Gallery) CreateAlbum(albumName string) (*Album, error) {
+	// Initialise new CRDT with provided album name
+	crdt, err := raccoon.NewCRDT(g.l)
+	if err != nil {
+		return nil, err
+	}
+	crdt.AlbumName = albumName
 
-	return "", nil
+	// Create a new album directory
+	dirName := crdt.Album
+	albumDir := filepath.Join(GALLERY_DIR, dirName)
+	err = os.Mkdir(albumDir, os.ModeDir|0777)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create album: %w", err)
+	}
+
+	// Add CRDT to new album directory
+	crdtFile := filepath.Join(albumDir, "crdt.json")
+	jsonData, err := crdt.MarshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSON data: %w", err)
+	}
+	err = os.WriteFile(crdtFile, jsonData, 0777)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write file %s: %w", crdtFile, err)
+	}
+
+	// Initialise a new album
+	album := &Album{crdt, &map[string]bool{}}
+
+	// Add album to gallery
+	(*g.Albums)[dirName] = album
+
+	return album, nil
 }
 
 // Delete an album
