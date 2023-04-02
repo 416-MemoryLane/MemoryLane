@@ -154,13 +154,13 @@ func (g *Gallery) DeleteAlbum(aid string) error {
 }
 
 // Retrieve all the albums (i.e. directories of photos) that the user is part of
-func (g *Gallery) GetAlbums() (Albums, error) {
-	return nil, nil
+func (g *Gallery) GetAlbums() Albums {
+	return g.Albums
 }
 
-// Get an album
-func (g *Gallery) GetAlbum(album string) (Album, error) {
-	return Album{}, nil
+// Get an album. Return nil if the album does not exist
+func (g *Gallery) GetAlbum(aid string) *Album {
+	return (*g.Albums)[aid]
 }
 
 // Add a photo to an album
