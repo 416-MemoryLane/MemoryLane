@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -77,6 +78,20 @@ func main() {
 		encoder := json.NewEncoder(s)
 		if err := encoder.Encode(&d); err != nil {
 			l.Fatalf("failed encoding message: %v", err)
+		}
+
+		msgNum := 1
+		ticker := time.NewTicker(3 * time.Second)
+		for range ticker.C {
+			d.Message = fmt.Sprintf("Message: %v", msgNum)
+
+			if err = encoder.Encode(&d); err != nil {
+				l.Printf("failed encoding message: %v\n", err)
+				continue
+			}
+
+			l.Println("sent msg:", d.Message)
+			msgNum++
 		}
 	}
 

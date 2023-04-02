@@ -9,12 +9,14 @@ import (
 func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 	defer stream.Close()
 
-	decoder := json.NewDecoder(stream)
-	var d WingmanMessage
-	if err := decoder.Decode(&d); err != nil {
-		wh.l.Printf("error handling stream: %v", err)
-		return
-	}
+	for {
+		decoder := json.NewDecoder(stream)
+		var d WingmanMessage
+		if err := decoder.Decode(&d); err != nil {
+			wh.l.Printf("error handling stream: %v", err)
+			return
+		}
 
-	wh.l.Println("received message:", d.Message)
+		wh.l.Println("received message:", d.Message)
+	}
 }
