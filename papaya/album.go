@@ -1,6 +1,9 @@
 package papaya
 
-import "memory-lane/app/raccoon"
+import (
+	"fmt"
+	"memory-lane/app/raccoon"
+)
 
 type Album struct {
 	Crdt   *raccoon.CRDT
@@ -8,3 +11,9 @@ type Album struct {
 }
 
 type Albums *map[string]*Album
+
+// Stringer for Album
+func (a Album) String() string {
+	return fmt.Sprintf("Album{CRDT: %v, Photos: %v}",
+		*a.Crdt, *a.Photos)
+}
