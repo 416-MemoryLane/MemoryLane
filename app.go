@@ -27,11 +27,6 @@ type CrdtStruct struct {
 
 const protocolID = "pingPongCounter"
 
-// TODO: How to connect a front end?
-// TODO: contact galactus (http request) to register this node's multiaddr and Peer ID
-// TODO: retrieve other nodes multiaddr + Peer ID from Galactus and connect to them
-// TODO: perform necessary operations/routines with connected nodes (e.g. sync the albums, add/delete images etc.)
-// TODO: probably need some better error handling
 func main() {
 	l := log.New(os.Stdout, "memory-lane ", log.LstdFlags)
 	g, err := papaya.NewGallery(l)
