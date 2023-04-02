@@ -21,12 +21,6 @@ import (
 	"github.com/multiformats/go-multiaddr"
 )
 
-type CrdtStruct struct {
-	Name     string
-	Commands []string
-	Image    []byte
-}
-
 const PROTOCOL_ID = "p2p"
 
 func main() {
