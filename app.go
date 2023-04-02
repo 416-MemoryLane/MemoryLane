@@ -36,7 +36,7 @@ func main() {
 	l := log.New(os.Stdout, "memory-lane ", log.LstdFlags)
 	_, err := papaya.NewGallery(l)
 	if err != nil {
-		l.Fatal("error while instantiating gallery", err)
+		l.Fatal("error while instantiating gallery: ", err)
 	}
 
 	l.Println("Gallery initialized")
