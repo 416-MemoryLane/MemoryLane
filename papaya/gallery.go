@@ -138,12 +138,19 @@ func (g *Gallery) CreateAlbum(albumName string) (*Album, error) {
 	return album, nil
 }
 
-// Delete an album
-func (g *Gallery) DeleteAlbum(aid string) (string, error) {
-	// Must delete the chosen directory and all its contents (photos + CRDT)
-	// Must delete the entry in Galactus
+// Delete an album if it exists
+func (g *Gallery) DeleteAlbum(aid string) error {
+	// Delete album from filesystem
+	albumDir := filepath.Join(GALLERY_DIR, aid)
+	err := os.RemoveAll(albumDir)
+	if err != nil {
+		return fmt.Errorf("failed to delete album %s: %w", albumDir, err)
+	}
 
-	return "", nil
+	// Remove from Gallery
+	delete(*g.Albums, aid)
+
+	return nil
 }
 
 // Retrieve all the albums (i.e. directories of photos) that the user is part of
