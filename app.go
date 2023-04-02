@@ -40,12 +40,6 @@ func main() {
 	}
 	l.Println(g)
 
-	// a, err := g.CreateAlbum("My Cool New Album")
-	// if err != nil {
-	// 	l.Fatal("error while instantiating gallery: ", err)
-	// }
-	// l.Println(a)
-
 	// Add -peer-address flag (this is currently given as a command line argument but will be provided by Galactus)
 	peerAddr := flag.String("peer-address", "", "peer address")
 	flag.Parse()
