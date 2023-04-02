@@ -76,14 +76,14 @@ func main() {
 			l.Fatalf("failed opening a new stream: %v", err)
 		}
 
-		// Encode JSON data and send over stream
-		d := wingman.WingmanMessage{Message: "Hello, world!"}
-		encoder := json.NewEncoder(s)
-		if err := encoder.Encode(&d); err != nil {
-			l.Fatalf("failed encoding message: %v", err)
-		}
-
 		go func() {
+			// Encode JSON data and send over stream
+			d := wingman.WingmanMessage{Message: "Hello, world!"}
+			encoder := json.NewEncoder(s)
+			if err := encoder.Encode(&d); err != nil {
+				l.Fatalf("failed encoding message: %v", err)
+			}
+
 			msgNum := 1
 			ticker := time.NewTicker(3 * time.Second)
 			for range ticker.C {
