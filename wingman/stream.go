@@ -22,17 +22,31 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 		// if the gallery does not have the album, refetch from Galactus
 
 		// Instantiate data structures required for comparing CRDTs
-		// msgAlbum := d.Album
-		// msgCrdt := d.Crdt
-		// album := (*wh.Gallery.Albums)[msgAlbum]
-		// albumCrdt := album.Crdt
+		msgAlbumId := d.Album
+		msgCrdt := d.Crdt
+		album := (*wh.Gallery.Albums)[msgAlbumId]
+		albumCrdt := album.Crdt
 
-		// Photos that are deleted and in the current node's album
-		// delete the photos from the filesystem
-		// reconcile CRDT
+		// Find and handle photos to delete
+		for p := range *msgCrdt.Deleted {
+			msgVal, msgOk := (*msgCrdt.Deleted)[p]
+			albumDeletedVal, albumDeletedOk := (*albumCrdt.Deleted)[p]
 
-		// Photos that are deleted but that were never in the current node's album
-		// reconcile CRDT by adding theses nodes to the deleted and added sets
+			if msgOk && msgVal && (!albumDeletedOk || !albumDeletedVal) {
+				albumPhoto, err := wh.Gallery.GetPhoto(msgAlbumId, p)
+				if err != nil {
+					wh.l.Printf("error retrieving photo while reconciling node: %v\n", err)
+					continue
+				}
+
+				// Reconcile file system and CRDT
+				albumCrdt.AddPhoto(p)
+				if albumPhoto != nil {
+					wh.Gallery.DeletePhoto(msgAlbumId, p)
+				}
+				albumCrdt.DeletePhoto(p)
+			}
+		}
 
 		// Reconcile only the photos for which the actual images have been provided
 		// add the photos to the filesystem
