@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.rmsc {
+  --rmsc-main: #000000 !important;
+  --rmsc-hover: #f1f3f5;
+  --rmsc-selected: #d1d5db !important;
+  --rmsc-border: #d1d5db !important;
+  --rmsc-gray: #aaa;
+  --rmsc-bg: #fff;
+  --rmsc-p: 10px; /* Spacing */
+  --rmsc-radius: 4px; /* Radius */
+  --rmsc-h: 38px; /* Height */
+}

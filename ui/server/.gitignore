@@ -1,0 +1,4 @@
+/node_modules
+/albums
+
+.DS_Store
