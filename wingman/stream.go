@@ -1,12 +1,14 @@
 package wingman
 
 import (
+	"context"
 	"encoding/json"
 	"memory-lane/app/papaya"
 	"os"
 	"path/filepath"
 
 	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/protocol"
 )
 
 func (wh *WingmanHandler) HandleStream(stream network.Stream) {
@@ -39,7 +41,6 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 				albumPhoto, err := wh.Gallery.GetPhoto(msgAlbumId, p)
 				if err != nil {
 					wh.l.Printf("error retrieving photo while reconciling node: %v\n", err)
-					continue
 				}
 
 				// Reconcile file system and CRDT
@@ -99,10 +100,25 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 				Photos:          &photosToSend,
 			}
 
-			encoder := json.NewEncoder(stream)
+			// Connect to the node at the given address
+			peerAddrInfo := MultiaddrStrToPeerAddrInfo(d.SenderMultiAddr, wh.l)
+			if err := (*wh.Node).Connect(context.Background(), *peerAddrInfo); err != nil {
+				panic(err)
+			}
+			wh.l.Println("connected to in handler:", peerAddrInfo.String())
+
+			// Open a new stream to a connected node
+			s, err := (*wh.Node).NewStream(context.Background(), peerAddrInfo.ID, protocol.ID(wh.ProtocolId))
+			if err != nil {
+				wh.l.Printf("failed opening a new stream: %v", err)
+			}
+
+			encoder := json.NewEncoder(s)
 			if err := encoder.Encode(msg); err != nil {
 				wh.l.Printf("error sending msg with added photos: %v\n", err)
 			}
+
+			wh.l.Printf("sent msg to: %v\n for album: %v from handler\n", wh.Multiaddr, msgAlbumId)
 		}
 
 		// Persist reconciled CRDT to filesystem

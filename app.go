@@ -39,12 +39,12 @@ func main() {
 	defer node.Close()
 
 	// Extract multiaddr to send to Galactus
-	multiAddr := newMultiAddr(node, l)
+	maddr := newMultiAddr(node, l)
 	node.SetStreamHandler(PROTOCOL_ID, func(s network.Stream) {
-		handler := wingman.NewWingmanHandler(multiAddr, g, l)
+		handler := wingman.NewWingmanHandler(maddr, PROTOCOL_ID, &node, g, l)
 		handler.HandleStream(s)
 	})
-	l.Println("Listening on:", multiAddr)
+	l.Println("Listening on:", maddr)
 
 	// TODO: should replace with multiaddrs received from Galactus
 	peerAddrs := []string{
@@ -82,7 +82,7 @@ func main() {
 
 			// Construct initial wingmanMsg
 			wingmanMsg := wingman.WingmanMessage{
-				SenderMultiAddr: peerAddrInfo.String(),
+				SenderMultiAddr: maddr,
 				Album:           aid,
 				Crdt:            album.Crdt,
 				Photos:          nil,
@@ -100,7 +100,7 @@ func main() {
 					album := g.GetAlbum(aid)
 
 					wingmanMsg = wingman.WingmanMessage{
-						SenderMultiAddr: peerAddrInfo.String(),
+						SenderMultiAddr: maddr,
 						Album:           aid,
 						Crdt:            album.Crdt,
 						Photos:          nil,
