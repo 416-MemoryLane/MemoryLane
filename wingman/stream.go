@@ -17,7 +17,7 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			return
 		}
 
-		wh.l.Println("received message:", d.Message)
+		wh.l.Println("received message:", d)
 
 		// if the message received has nothing to reconcile
 		// continue

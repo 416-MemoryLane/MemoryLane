@@ -77,28 +77,41 @@ func main() {
 
 		// Retrieve album directories from filesystem and create a stream for each album
 		for _, album := range *g.GetAlbums() {
-			l.Println("Creating a stream for album:", album)
+			aid := album.Crdt.Album
+			l.Println("Creating a stream for album:", aid)
+
+			// Construct initial wingmanMsg
+			wingmanMsg := wingman.WingmanMessage{
+				SenderMultiAddr: peerAddrInfo.String(),
+				Album:           aid,
+				Crdt:            album.Crdt,
+				Photos:          nil,
+			}
 
 			go func() {
 				// Encode JSON data and send over stream
-				d := wingman.WingmanMessage{Message: "Hello, world!"}
 				encoder := json.NewEncoder(s)
-				if err := encoder.Encode(&d); err != nil {
+				if err := encoder.Encode(&wingmanMsg); err != nil {
 					l.Fatalf("failed encoding message: %v", err)
 				}
 
-				msgNum := 1
 				ticker := time.NewTicker(3 * time.Second)
 				for range ticker.C {
-					d.Message = fmt.Sprintf("Message: %v", msgNum)
+					album := g.GetAlbum(aid)
 
-					if err = encoder.Encode(&d); err != nil {
+					wingmanMsg = wingman.WingmanMessage{
+						SenderMultiAddr: peerAddrInfo.String(),
+						Album:           aid,
+						Crdt:            album.Crdt,
+						Photos:          nil,
+					}
+
+					if err = encoder.Encode(&wingmanMsg); err != nil {
 						l.Printf("failed encoding message: %v\n", err)
 						continue
 					}
 
-					l.Println("sent msg:", d.Message)
-					msgNum++
+					l.Printf("sent msg to: %v\n for album: %v\n", peerAddrInfo.String(), aid)
 				}
 			}()
 		}

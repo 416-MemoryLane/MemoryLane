@@ -159,7 +159,6 @@ func (g *Gallery) DeleteAlbum(aid string) error {
 }
 
 // Retrieve all the albums (i.e. directories of photos) that the user is part of
-// TODO: This should likely be just GetAlbumsIds or something like this, as we would only need them to send to Galactus
 func (g *Gallery) GetAlbums() Albums {
 	return g.Albums
 }
