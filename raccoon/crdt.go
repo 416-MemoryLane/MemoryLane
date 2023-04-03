@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"reflect"
 
 	"github.com/google/uuid"
 )
@@ -73,14 +72,6 @@ func (c *CRDT) Reconcile(crdt *CRDT) (*CRDT, bool) {
 	}
 
 	return c, isChanged
-}
-
-// Checks if the state of the albums as shown by the CRDTs are equivalent
-func (c *CRDT) Equals(crdt *CRDT) bool {
-	addedEq := reflect.DeepEqual(*c.Added, *crdt.Added)
-	deletedEq := reflect.DeepEqual(*c.Deleted, *crdt.Deleted)
-
-	return addedEq && deletedEq
 }
 
 func (c *CRDT) UnmarshalJSON(d []byte) error {

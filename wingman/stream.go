@@ -22,35 +22,28 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 		// if the gallery does not have the album, refetch from Galactus
 
 		// Instantiate data structures required for comparing CRDTs
-		msgAlbum := d.Album
-		msgCrdt := d.Crdt
-		album := (*wh.Gallery.Albums)[msgAlbum]
-		albumCrdt := album.Crdt
+		// msgAlbum := d.Album
+		// msgCrdt := d.Crdt
+		// album := (*wh.Gallery.Albums)[msgAlbum]
+		// albumCrdt := album.Crdt
 
-		for {
-			// Album states are equal so there is nothing to reconcile
-			if albumCrdt.Equals(msgCrdt) {
-				break
-			}
+		// Photos that are deleted and in the current node's album
+		// delete the photos from the filesystem
+		// reconcile CRDT
 
-			// if the message received is missing one or more deletes
-			// continue
+		// Photos that are deleted but that were never in the current node's album
+		// reconcile CRDT by adding theses nodes to the deleted and added sets
 
-			// if the message received has one or more deletes
-			// delete the photos from the filesystem
-			// reconcile CRDT
+		// Reconcile only the photos for which the actual images have been provided
+		// add the photos to the filesystem
+		// reconcile CRDT
 
-			// if the message received is missing one or more photos
-			// AND these photos have not already been deleted
-			// send a message to this node with the photos it's missing
+		// If the current node has added photos that the sender node does not have
+		// send a message to this node with the current CRDT
+		// break
 
-			// if the message received has one or more photos with all of the missing photos
-			// add the photos to the filesystem
-			// reconcile CRDT
-
-			// if the message received has one or more photos with some of the missing photos
-			// add the photos to the filesystem
-			// reconcile CRDT with only the added photos
-		}
+		// In the following cases, there is nothing to reconcile:
+		// if the album states are equal
+		// or if difference between album states is that the incoming album state is missing deletes
 	}
 }
