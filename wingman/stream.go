@@ -106,11 +106,11 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 		crdtFile := filepath.Join(papaya.GALLERY_DIR, msgAlbumId, "crdt.json")
 		jsonData, err := albumCrdt.MarshalJSON()
 		if err != nil {
-			wh.l.Printf("failed to marshal JSON data: %w", err)
+			wh.l.Printf("failed to marshal JSON data: %v", err)
 		}
 		err = os.WriteFile(crdtFile, jsonData, 0777)
 		if err != nil {
-			wh.l.Printf("failed to write file %s: %w", crdtFile, err)
+			wh.l.Printf("failed to write file %s: %v", crdtFile, err)
 		}
 
 		// In the following cases, there is nothing to reconcile:
