@@ -19,7 +19,7 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 
 		wh.l.Println("received message:", d)
 
-		// if the gallery does not have the album, refetch from Galactus
+		// TODO: if the gallery does not have the album, refetch from Galactus
 
 		// Instantiate data structures required for comparing CRDTs
 		msgAlbumId := d.Album
