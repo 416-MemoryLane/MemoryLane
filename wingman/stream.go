@@ -2,6 +2,9 @@ package wingman
 
 import (
 	"encoding/json"
+	"memory-lane/app/papaya"
+	"os"
+	"path/filepath"
 
 	"github.com/libp2p/go-libp2p/core/network"
 )
@@ -97,6 +100,17 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			if err := encoder.Encode(msg); err != nil {
 				wh.l.Printf("error sending msg with added photos: %v\n", err)
 			}
+		}
+
+		// Persist reconciled CRDT to filesystem
+		crdtFile := filepath.Join(papaya.GALLERY_DIR, msgAlbumId, "crdt.json")
+		jsonData, err := albumCrdt.MarshalJSON()
+		if err != nil {
+			wh.l.Printf("failed to marshal JSON data: %w", err)
+		}
+		err = os.WriteFile(crdtFile, jsonData, 0777)
+		if err != nil {
+			wh.l.Printf("failed to write file %s: %w", crdtFile, err)
 		}
 
 		// In the following cases, there is nothing to reconcile:
