@@ -48,8 +48,8 @@ func main() {
 
 	// TODO: should replace with multiaddrs received from Galactus
 	peerAddrs := []string{
-		"/ip4/172.28.67.129/tcp/36939/p2p/12D3KooWNyuw9KoSJDRnGbDoD89mEuEKB3yfmChNb5EQdbTo2A6k",
-		"/ip4/172.28.67.129/tcp/46027/p2p/12D3KooWHNRNVUKS83R29AsRAGFwtk8sf9axJLb5wwr1XKWtvKNt",
+		"/ip4/172.28.67.129/tcp/36891/p2p/12D3KooWMW1y5JcJ95DYJ7pssShb7F3bCWwWzvMZ81Yxa9jfQBbh",
+		"/ip4/172.28.67.129/tcp/34263/p2p/12D3KooWJZMXwYo8GpAbDiezXFPwViKnjWT7NKDwe3njnM8frn4t",
 	}
 
 	for _, addr := range peerAddrs {
