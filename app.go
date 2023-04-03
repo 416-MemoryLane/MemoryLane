@@ -24,6 +24,7 @@ import (
 const PROTOCOL_ID = "p2p"
 
 func main() {
+	// Instantiate Gallery
 	l := log.New(os.Stdout, "memory-lane ", log.LstdFlags)
 	g, err := papaya.NewGallery(l)
 	if err != nil {
@@ -31,15 +32,14 @@ func main() {
 	}
 	l.Println(g)
 
-	// start a libp2p node
+	// Start a libp2p node
 	node, err := libp2p.New()
 	if err != nil {
 		l.Fatalln(err)
 	}
-	// defer the close of the network connection
 	defer node.Close()
 
-	// Extract private address to send to Galactus
+	// Extract multiaddr to send to Galactus
 	multiAddr := newMultiAddr(node, l)
 	node.SetStreamHandler(PROTOCOL_ID, func(s network.Stream) {
 		handler := wingman.NewWingmanHandler(l)
