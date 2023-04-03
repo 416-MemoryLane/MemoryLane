@@ -9,14 +9,14 @@ app.use(express.json());
 app.use(cors());
 
 const port = 4321;
-const ALBUM_DIR = "./albums";
+const GALLERY_DIR = "../../memory-lane-gallery";
 const STATIC_PATH = "/static";
 
-if (!fs.existsSync(ALBUM_DIR)) {
-  fs.mkdirSync(ALBUM_DIR);
+if (!fs.existsSync(GALLERY_DIR)) {
+  fs.mkdirSync(GALLERY_DIR);
 }
 
-app.use(STATIC_PATH, express.static(ALBUM_DIR));
+app.use(STATIC_PATH, express.static(GALLERY_DIR));
 
 // all updates to FS should also update CRDT
 // create album -> create crdt.json in the folder
@@ -34,14 +34,14 @@ const getPhotoUuid = (fileName) => {
 };
 
 app.get("/albums", (req, res) => {
-  const albums = fs.readdirSync(ALBUM_DIR, { withFileTypes: true });
+  const albums = fs.readdirSync(GALLERY_DIR, { withFileTypes: true });
   const albumStruct = albums
     .map((album) => {
       if (!album.isDirectory()) return null;
-      const images = fs.readdirSync(`${ALBUM_DIR}/${album.name}`, {
+      const images = fs.readdirSync(`${GALLERY_DIR}/${album.name}`, {
         withFileTypes: true,
       });
-      const crdtPath = `${ALBUM_DIR}/${album.name}/crdt.json`;
+      const crdtPath = `${GALLERY_DIR}/${album.name}/crdt.json`;
       if (!fs.existsSync(crdtPath)) {
         return res.status(500).send("No crdt.json file found in folder");
       }
@@ -81,7 +81,7 @@ app.post("/albums", (req, res) => {
     added: [],
     deleted: [],
   };
-  const path = `${ALBUM_DIR}/${uuid}`;
+  const path = `${GALLERY_DIR}/${uuid}`;
   if (!fs.existsSync(path)) {
     fs.mkdirSync(path);
   }
@@ -91,7 +91,7 @@ app.post("/albums", (req, res) => {
 
 app.delete("/albums/:uuid", (req, res) => {
   const { uuid } = req.params;
-  const path = `${ALBUM_DIR}/${uuid}`;
+  const path = `${GALLERY_DIR}/${uuid}`;
   fs.rmSync(path, { recursive: true, force: true });
   res.status(200).send("Album deleted");
 });
@@ -104,7 +104,7 @@ app.get("/albums/:id", (req, res) => {
 
 app.post("/albums/:albumName/images", (req, res) => {
   const { albumName } = req.params;
-  const albumPath = `${ALBUM_DIR}/${albumName}`;
+  const albumPath = `${GALLERY_DIR}/${albumName}`;
   if (!fs.existsSync(albumPath)) {
     fs.mkdirSync(albumPath);
   }
@@ -139,7 +139,7 @@ app.post("/albums/:albumName/images", (req, res) => {
 
 app.delete("/albums/:albumName/images/:imageName", (req, res) => {
   const { albumName, imageName } = req.params;
-  const albumPath = `${ALBUM_DIR}/${albumName}`;
+  const albumPath = `${GALLERY_DIR}/${albumName}`;
   const imagePath = `${albumPath}/${imageName}`;
 
   fs.unlink(imagePath, function (err) {
