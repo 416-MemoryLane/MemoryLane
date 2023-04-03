@@ -76,28 +76,33 @@ func main() {
 			l.Fatalf("failed opening a new stream: %v", err)
 		}
 
-		go func() {
-			// Encode JSON data and send over stream
-			d := wingman.WingmanMessage{Message: "Hello, world!"}
-			encoder := json.NewEncoder(s)
-			if err := encoder.Encode(&d); err != nil {
-				l.Fatalf("failed encoding message: %v", err)
-			}
+		// Retrieve album directories from filesystem and create a stream for each album
+		for _, album := range *g.GetAlbums() {
+			l.Println("Creating a stream for album:", album)
 
-			msgNum := 1
-			ticker := time.NewTicker(3 * time.Second)
-			for range ticker.C {
-				d.Message = fmt.Sprintf("Message: %v", msgNum)
-
-				if err = encoder.Encode(&d); err != nil {
-					l.Printf("failed encoding message: %v\n", err)
-					continue
+			go func() {
+				// Encode JSON data and send over stream
+				d := wingman.WingmanMessage{Message: "Hello, world!"}
+				encoder := json.NewEncoder(s)
+				if err := encoder.Encode(&d); err != nil {
+					l.Fatalf("failed encoding message: %v", err)
 				}
 
-				l.Println("sent msg:", d.Message)
-				msgNum++
-			}
-		}()
+				msgNum := 1
+				ticker := time.NewTicker(3 * time.Second)
+				for range ticker.C {
+					d.Message = fmt.Sprintf("Message: %v", msgNum)
+
+					if err = encoder.Encode(&d); err != nil {
+						l.Printf("failed encoding message: %v\n", err)
+						continue
+					}
+
+					l.Println("sent msg:", d.Message)
+					msgNum++
+				}
+			}()
+		}
 	}
 
 	// wait for a SIGINT or SIGTERM signal (ctrl + c)
