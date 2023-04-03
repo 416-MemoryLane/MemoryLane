@@ -251,10 +251,9 @@ func (g *Gallery) DeletePhoto(aid string, pid string) (string, error) {
 	return pid, nil
 }
 
-// Retrieve all the photos of an album
-// TODO: This will likely be more complicated as it will be required to create the message to send to another node
-func (g *Gallery) GetPhotos(aid string) ([][]byte, error) {
-	return nil, nil
+// Retrieve all the photo file names of an album
+func (g *Gallery) GetPhotos(aid string) Photos {
+	return (*g.Albums)[aid].Photos
 }
 
 // Retrieve the photo from an album

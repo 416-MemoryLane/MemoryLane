@@ -6,10 +6,11 @@ import (
 )
 
 type WingmanHandler struct {
-	Gallery *papaya.Gallery
-	l       *log.Logger
+	Multiaddr string
+	Gallery   *papaya.Gallery
+	l         *log.Logger
 }
 
-func NewWingmanHandler(g *papaya.Gallery, l *log.Logger) *WingmanHandler {
-	return &WingmanHandler{g, l}
+func NewWingmanHandler(m string, g *papaya.Gallery, l *log.Logger) *WingmanHandler {
+	return &WingmanHandler{m, g, l}
 }

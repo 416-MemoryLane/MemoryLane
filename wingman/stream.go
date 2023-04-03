@@ -68,9 +68,34 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			albumCrdt.AddPhoto(p)
 		}
 
-		// If the current node has added photos that the sender node does not have
-		// send a message to this node with the current CRDT
-		// break
+		// Create a message of photos to send to sender node
+		var photosToSend map[string]*[]byte
+		albumPhotos := wh.Gallery.GetPhotos(msgAlbumId)
+		for p := range *albumPhotos {
+			if val, ok := (*msgCrdt.Added)[p]; !val || !ok {
+				d, err := wh.Gallery.GetPhoto(msgAlbumId, p)
+				if err != nil {
+					wh.l.Printf("error retrieving photo while creating reply message: %v\n", err)
+					continue
+				}
+				photosToSend[p] = &d
+			}
+		}
+
+		// If there are photos to send, send WingmanMessage with the photos
+		if photosToSend != nil {
+			msg := WingmanMessage{
+				SenderMultiAddr: wh.Multiaddr,
+				Album:           msgAlbumId,
+				Crdt:            albumCrdt,
+				Photos:          &photosToSend,
+			}
+
+			encoder := json.NewEncoder(stream)
+			if err := encoder.Encode(msg); err != nil {
+				wh.l.Printf("error sending msg with added photos: %v\n", err)
+			}
+		}
 
 		// In the following cases, there is nothing to reconcile:
 		// if the album states are equal
