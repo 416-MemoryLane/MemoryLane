@@ -41,7 +41,7 @@ func main() {
 	// Extract multiaddr to send to Galactus
 	multiAddr := newMultiAddr(node, l)
 	node.SetStreamHandler(PROTOCOL_ID, func(s network.Stream) {
-		handler := wingman.NewWingmanHandler(l)
+		handler := wingman.NewWingmanHandler(g, l)
 		handler.HandleStream(s)
 	})
 	l.Println("Listening on:", multiAddr)

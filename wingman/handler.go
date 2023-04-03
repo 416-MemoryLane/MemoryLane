@@ -1,11 +1,15 @@
 package wingman
 
-import "log"
+import (
+	"log"
+	"memory-lane/app/papaya"
+)
 
 type WingmanHandler struct {
-	l *log.Logger
+	Gallery *papaya.Gallery
+	l       *log.Logger
 }
 
-func NewWingmanHandler(l *log.Logger) *WingmanHandler {
-	return &WingmanHandler{l}
+func NewWingmanHandler(g *papaya.Gallery, l *log.Logger) *WingmanHandler {
+	return &WingmanHandler{g, l}
 }

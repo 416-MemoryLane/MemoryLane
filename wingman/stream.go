@@ -21,8 +21,16 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 
 		// if the gallery does not have the album, refetch from Galactus
 
-		// if the message received has nothing to reconcile
-		// continue
+		// Instantiate data structures required for comparing CRDTs
+		msgAlbum := d.Album
+		msgCrdt := d.Crdt
+		album := (*wh.Gallery.Albums)[msgAlbum]
+		albumCrdt := album.Crdt
+
+		// Album states are equal so there is nothing to reconcile
+		if albumCrdt.Equals(msgCrdt) {
+			continue
+		}
 
 		// if the message received is missing one or more deletes
 		// continue
