@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -105,12 +104,14 @@ func main() {
 		}
 	}
 
-	// wait for a SIGINT or SIGTERM signal (ctrl + c)
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	<-ch
+	// Gracefully shutdown node
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, os.Kill)
 
-	// shut the node down
+	sig := <-sigChan
+	l.Println("Received terminate, graceful shutdown", sig)
+
 	if err := node.Close(); err != nil {
 		panic(err)
 	}
