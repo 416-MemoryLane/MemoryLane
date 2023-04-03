@@ -257,9 +257,19 @@ func (g *Gallery) GetPhotos(aid string) Photos {
 }
 
 // Retrieve the photo from an album
-// TODO: This will likely be more complicated as it will be required to create the message to send to another node
-func (g *Gallery) GetPhoto(aid string, pid string) ([]byte, error) {
-	return nil, nil
+func (g *Gallery) GetPhoto(aid string, pid string) (*[]byte, error) {
+	// Construct the file path to the photo based on the album ID and photo ID
+	photoPath := filepath.Join(GALLERY_DIR, aid, pid)
+
+	// Read the photo file into memory
+	photoData, err := os.ReadFile(photoPath)
+	if err != nil {
+		// If there was an error reading the file, return it
+		return nil, fmt.Errorf("error reading photo file: %v", err)
+	}
+
+	// Return a pointer to the photo data
+	return &photoData, nil
 }
 
 // Stringer for Gallery

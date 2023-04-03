@@ -78,7 +78,7 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 					wh.l.Printf("error retrieving photo while creating reply message: %v\n", err)
 					continue
 				}
-				photosToSend[p] = &d
+				photosToSend[p] = d
 			}
 		}
 
