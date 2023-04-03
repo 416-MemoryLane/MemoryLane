@@ -42,7 +42,11 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 				// Reconcile file system and CRDT
 				albumCrdt.AddPhoto(p)
 				if albumPhoto != nil {
-					wh.Gallery.DeletePhoto(msgAlbumId, p)
+					_, err := wh.Gallery.DeletePhoto(msgAlbumId, p)
+					if err != nil {
+						wh.l.Printf("error deleting photo while reconciling node: %v\n", err)
+						continue
+					}
 				}
 				albumCrdt.DeletePhoto(p)
 			}
@@ -55,7 +59,11 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 
 			// Reconcile file system and CRDT
 			if !albumAddedOk || !albumAddedVal {
-				wh.Gallery.AddPhoto(msgAlbumId, *msgPhotos[p])
+				_, err := wh.Gallery.AddPhoto(msgAlbumId, *msgPhotos[p])
+				if err != nil {
+					wh.l.Printf("error adding photo while reconciling node: %v\n", err)
+					continue
+				}
 			}
 			albumCrdt.AddPhoto(p)
 		}
