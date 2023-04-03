@@ -48,9 +48,17 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			}
 		}
 
-		// Reconcile only the photos for which the actual images have been provided
-		// add the photos to the filesystem
-		// reconcile CRDT
+		// Find and handle photos to add
+		msgPhotos := *d.Photos
+		for p := range msgPhotos {
+			albumAddedVal, albumAddedOk := (*albumCrdt.Added)[p]
+
+			// Reconcile file system and CRDT
+			if !albumAddedOk || !albumAddedVal {
+				wh.Gallery.AddPhoto(msgAlbumId, *msgPhotos[p])
+			}
+			albumCrdt.AddPhoto(p)
+		}
 
 		// If the current node has added photos that the sender node does not have
 		// send a message to this node with the current CRDT
