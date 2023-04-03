@@ -58,22 +58,6 @@ func (c *CRDT) DeletePhoto(pid string) {
 	(*c.Deleted)[pid] = true
 }
 
-func (c *CRDT) Reconcile(crdt *CRDT) (*CRDT, bool) {
-	isChanged := false
-
-	for k := range *crdt.Added {
-		c.AddPhoto(k)
-		isChanged = true
-	}
-
-	for k := range *crdt.Deleted {
-		c.DeletePhoto(k)
-		isChanged = true
-	}
-
-	return c, isChanged
-}
-
 func (c *CRDT) UnmarshalJSON(d []byte) error {
 	type CRDTAlias CRDT
 	aux := &struct {
