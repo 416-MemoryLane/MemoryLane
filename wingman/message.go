@@ -6,5 +6,5 @@ type WingmanMessage struct {
 	SenderMultiAddr string        `json:"sender"`
 	Album           string        `json:"album"`
 	Crdt            *raccoon.CRDT `json:"crdt"`
-	Photos          *[][]byte     `json:"photos;omitifempty"`
+	Photos          *[][]byte     `json:"photos,omitempty"`
 }
