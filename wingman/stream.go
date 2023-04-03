@@ -53,19 +53,21 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 		}
 
 		// Find and handle photos to add
-		msgPhotos := *d.Photos
-		for p := range msgPhotos {
-			albumAddedVal, albumAddedOk := (*albumCrdt.Added)[p]
+		msgPhotos := d.Photos
+		if msgPhotos != nil {
+			for p := range *msgPhotos {
+				albumAddedVal, albumAddedOk := (*albumCrdt.Added)[p]
 
-			// Reconcile file system and CRDT
-			if !albumAddedOk || !albumAddedVal {
-				_, err := wh.Gallery.AddPhoto(msgAlbumId, *msgPhotos[p])
-				if err != nil {
-					wh.l.Printf("error adding photo while reconciling node: %v\n", err)
-					continue
+				// Reconcile file system and CRDT
+				if !albumAddedOk || !albumAddedVal {
+					_, err := wh.Gallery.AddPhoto(msgAlbumId, *(*msgPhotos)[p])
+					if err != nil {
+						wh.l.Printf("error adding photo while reconciling node: %v\n", err)
+						continue
+					}
 				}
+				albumCrdt.AddPhoto(p)
 			}
-			albumCrdt.AddPhoto(p)
 		}
 
 		// Create a message of photos to send to sender node
