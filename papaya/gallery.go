@@ -187,7 +187,7 @@ func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
 	photoFile := filepath.Join(GALLERY_DIR, aid, pid)
 	f, err := os.Create(photoFile)
 	if err != nil {
-		return "", fmt.Errorf("failed to convert bytes to img: %w", err)
+		return "", fmt.Errorf("failed to create file: %w", err)
 	}
 	defer f.Close()
 
