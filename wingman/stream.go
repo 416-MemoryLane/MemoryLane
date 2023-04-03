@@ -41,6 +41,7 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			// reconcile CRDT
 
 			// if the message received is missing one or more photos
+			// AND these photos have not already been deleted
 			// send a message to this node with the photos it's missing
 
 			// if the message received has one or more photos with all of the missing photos
