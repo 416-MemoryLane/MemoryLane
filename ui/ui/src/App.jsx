@@ -7,6 +7,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { MultiSelect } from "react-multi-select-component";
 import { v4 as uuidv4 } from "uuid";
+import { useSocket } from "./hooks/useSocket";
 
 const toastOptions = {
   position: "top-center",
@@ -52,16 +53,10 @@ function App() {
       }
     } catch (err) {
       console.log(err);
-    } finally {
-      poll();
     }
   };
 
-  const poll = () => {
-    setTimeout(async () => {
-      fetchAlbums();
-    }, 100);
-  };
+  useSocket(setAlbums);
 
   useEffect(() => {
     fetchAlbums();
