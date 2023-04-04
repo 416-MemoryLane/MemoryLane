@@ -47,7 +47,6 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 				}
 
 				// Reconcile file system and CRDT
-				albumCrdt.AddPhoto(p)
 				if albumPhoto != nil {
 					_, err := wh.Gallery.DeletePhoto(msgAlbumId, p)
 					if err != nil {

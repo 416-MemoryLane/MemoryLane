@@ -70,13 +70,20 @@ func (c *CRDT) AddPhoto(pid string) error {
 
 // Add deleted photo to CRDT and persist to filesystem
 func (c *CRDT) DeletePhoto(pid string) error {
+	var isInAdded bool
+	if _, ok := (*c.Added)[pid]; ok {
+		isInAdded = true
+	}
+
 	delete(*c.Added, pid)
 	(*c.Deleted)[pid] = true
 
 	err := c.PersistCRDT()
 	if err != nil {
 		delete(*c.Deleted, pid)
-		(*c.Added)[pid] = true
+		if isInAdded {
+			(*c.Added)[pid] = true
+		}
 		return err
 	}
 
