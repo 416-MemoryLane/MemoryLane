@@ -64,14 +64,19 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 				albumAddedVal, albumAddedOk := (*albumCrdt.Added)[p]
 
 				// Reconcile file system and CRDT
+				// TODO: albumCrdt.AddPhoto and wh.Gallery.AddPhotoWithFileName should be atomic
 				if !albumAddedOk || !albumAddedVal {
 					_, err := wh.Gallery.AddPhotoWithFileName(msgAlbumId, p, *(*msgPhotos)[p])
 					if err != nil {
 						wh.l.Printf("error adding photo while reconciling node: %v\n", err)
 						continue
 					}
+					err = albumCrdt.AddPhoto(p)
+					if err != nil {
+						wh.l.Printf("error reconciling CRDT in a add operation: %v\n", err)
+						continue
+					}
 				}
-				albumCrdt.AddPhoto(p)
 			}
 		}
 
