@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/gif"
+	"image/jpeg"
 	"image/png"
 	"log"
 	"memory-lane/app/raccoon"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -156,19 +159,25 @@ func (g *Gallery) GetAlbum(aid string) *raccoon.CRDT {
 }
 
 // Add a photo to an album if the album exists
-func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
+func (g *Gallery) AddPhoto(aid string, photo Photo) (string, error) {
 	crdt := (*g.Albums)[aid]
 	if crdt == nil {
 		return "", fmt.Errorf("album %s does not exist", aid)
 	}
 
-	// Decode the image bytes into an image
-	p, _, err := image.Decode(bytes.NewReader(photo))
+	// Register image formats
+	image.RegisterFormat("jpg", "jpeg", jpeg.Decode, jpeg.DecodeConfig)
+	image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
+	image.RegisterFormat("gif", "gif", gif.Decode, gif.DecodeConfig)
+	image.RegisterFormat("jpeg", "jpeg", jpeg.Decode, jpeg.DecodeConfig)
+
+	// Decode the image bytes
+	p, _, err := image.Decode(bytes.NewReader(*photo.Data))
 	if err != nil {
 		return "", fmt.Errorf("failed to convert bytes to img: %w", err)
 	}
 
-	// Create a new file to save the image
+	// Create a new file for the image
 	pid := uuid.New().String()
 	// TODO: Must determine this based on image type
 	photoFileName := fmt.Sprintf("%s.png", pid)
@@ -179,9 +188,26 @@ func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
 	}
 	defer f.Close()
 
-	// Encode the photo to png and write it to the file
-	if err := png.Encode(f, p); err != nil {
-		return "", fmt.Errorf("failed to encode to png: %w", err)
+	// Encode the photo based on mimeType
+	switch mimeType := photo.MimeType; mimeType {
+	case "image/jpg":
+		if err := jpeg.Encode(f, p, nil); err != nil {
+			return "", fmt.Errorf("failed to encode to png: %w", err)
+		}
+	case "image/jpeg":
+		if err := jpeg.Encode(f, p, nil); err != nil {
+			return "", fmt.Errorf("failed to encode to png: %w", err)
+		}
+	case "image/png":
+		if err := png.Encode(f, p); err != nil {
+			return "", fmt.Errorf("failed to encode to png: %w", err)
+		}
+	case "image/gif":
+		if err := gif.Encode(f, p, nil); err != nil {
+			return "", fmt.Errorf("failed to encode to png: %w", err)
+		}
+	default:
+		return "", fmt.Errorf("failed to convert bytes to img: unsupported type")
 	}
 
 	// Add photo to CRDT and write to file
@@ -242,7 +268,7 @@ func (g *Gallery) GetPhotos(aid string) Photos {
 }
 
 // Retrieve the photo from an album
-func (g *Gallery) GetPhoto(aid string, pid string) (*[]byte, error) {
+func (g *Gallery) GetPhoto(aid string, pid string) (*Photo, error) {
 	// Construct the file path to the photo based on the album ID and photo ID
 	photoPath := filepath.Join(GALLERY_DIR, aid, pid)
 
@@ -253,8 +279,11 @@ func (g *Gallery) GetPhoto(aid string, pid string) (*[]byte, error) {
 		return nil, fmt.Errorf("error reading photo file: %v", err)
 	}
 
+	// Determine the MIME type based on the photo file contents
+	mimeType := http.DetectContentType(photoData)
+
 	// Return a pointer to the photo data
-	return &photoData, nil
+	return &Photo{mimeType, &photoData}, nil
 }
 
 // Stringer for Gallery

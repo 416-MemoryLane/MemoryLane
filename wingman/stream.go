@@ -74,11 +74,11 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 		}
 
 		// Create a message of photos to send to sender node
-		var photosToSend map[string]*[]byte
+		var photosToSend map[string]*papaya.Photo
 		albumPhotos := wh.Gallery.GetPhotos(msgAlbumId)
 		for p := range *albumPhotos {
 			if photosToSend == nil {
-				photosToSend = make(map[string]*[]byte)
+				photosToSend = make(map[string]*papaya.Photo)
 			}
 			if val, ok := (*msgCrdt.Added)[p]; !val || !ok {
 				d, err := wh.Gallery.GetPhoto(msgAlbumId, p)
