@@ -18,7 +18,6 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const handleFileUpload = async () => {
-    console.log(albumId);
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";

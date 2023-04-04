@@ -3,6 +3,8 @@ import fs from "fs";
 import cors from "cors";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
+import { sendMessage, wss } from "./socket.mjs";
+import watch from "node-watch";
 
 const app = express();
 app.use(express.json());
@@ -16,14 +18,13 @@ if (!fs.existsSync(GALLERY_DIR)) {
   fs.mkdirSync(GALLERY_DIR);
 }
 
-app.use(STATIC_PATH, express.static(GALLERY_DIR));
+watch(GALLERY_DIR, { recursive: true }, (_, name) => {
+  if (!name.includes("crdt.json")) {
+    sendMessage("albums", getAlbums());
+  }
+});
 
-// all updates to FS should also update CRDT
-// create album -> create crdt.json in the folder
-// delete album -> delete entire directory?
-// add/remove photos from album -> should update crdt
-//  -> add: just add to added
-//  -> delete: remove from added and add to deleted
+app.use(STATIC_PATH, express.static(GALLERY_DIR));
 
 const getFileExtension = (fileName) => {
   return fileName.split(".").at(-1);
@@ -33,9 +34,9 @@ const getPhotoUuid = (fileName) => {
   return fileName.split(".").at(0);
 };
 
-app.get("/albums", (req, res) => {
-  const albums = fs.readdirSync(GALLERY_DIR, { withFileTypes: true });
-  const albumStruct = albums
+const getAlbums = () => {
+  return fs
+    .readdirSync(GALLERY_DIR, { withFileTypes: true })
     .map((album) => {
       if (!album.isDirectory()) return null;
       const images = fs.readdirSync(`${GALLERY_DIR}/${album.name}`, {
@@ -70,7 +71,11 @@ app.get("/albums", (req, res) => {
       };
     })
     .filter((album) => album !== null);
-  res.status(200).send(albumStruct);
+};
+
+app.get("/albums", (req, res) => {
+  const albums = getAlbums();
+  res.status(200).send(albums);
 });
 
 app.post("/albums", (req, res) => {
@@ -161,6 +166,12 @@ app.delete("/albums/:albumName/images/:imageName", (req, res) => {
   });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, "0.0.0.0", () => {
   console.log("Server running on port " + port);
+});
+
+server.on("upgrade", (req, socket, head) => {
+  wss.handleUpgrade(req, socket, head, (socket) => {
+    wss.emit("connection", socket, req);
+  });
 });
