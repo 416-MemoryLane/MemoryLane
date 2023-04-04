@@ -29,7 +29,13 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 		// Instantiate data structures required for comparing CRDTs
 		msgAlbumId := d.Album
 		msgCrdt := d.Crdt
-		albumCrdt := (*wh.Gallery.Albums)[msgAlbumId]
+
+		// Retrieve CRDT from filesystem
+		albumCrdt, err := wh.Gallery.GetAlbum(msgAlbumId)
+		if err != nil {
+			wh.l.Printf("error retrieving album's crdt: %v\n", err)
+			continue
+		}
 
 		// Find and handle photos to delete
 		for p := range *msgCrdt.Deleted {

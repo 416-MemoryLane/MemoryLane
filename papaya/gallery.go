@@ -151,9 +151,21 @@ func (g *Gallery) GetAlbums() raccoon.Albums {
 }
 
 // Get an album. Return nil if the album does not exist
-// TODO: This will likely be more complicated as it will be required to create the message to send to another node
-func (g *Gallery) GetAlbum(aid string) *raccoon.CRDT {
-	return (*g.Albums)[aid]
+func (g *Gallery) GetAlbum(aid string) (*raccoon.CRDT, error) {
+	crdtFile := filepath.Join(GALLERY_DIR, aid, "crdt.json")
+	crdtData, err := os.ReadFile(crdtFile)
+	if err != nil {
+		return nil, fmt.Errorf("error reading crdt file: %v", err)
+	}
+	crdt := &raccoon.CRDT{}
+	err = crdt.UnmarshalJSON(crdtData)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling crdt data: %v", err)
+	}
+
+	(*g.Albums)[aid] = crdt
+
+	return crdt, nil
 }
 
 // Add a photo to an album if the album exists

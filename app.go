@@ -97,7 +97,10 @@ func main() {
 
 				ticker := time.NewTicker(3 * time.Second)
 				for range ticker.C {
-					crdt := g.GetAlbum(aid)
+					crdt, err := g.GetAlbum(aid)
+					if err != nil {
+						l.Fatalf("failed retrieving crdt: %v", err)
+					}
 
 					wingmanMsg = wingman.WingmanMessage{
 						SenderMultiAddr: maddr,
