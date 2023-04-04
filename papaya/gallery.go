@@ -272,6 +272,7 @@ func (g *Gallery) DeletePhoto(aid string, pid string) (string, error) {
 
 // Retrieve all the photo ids of an album
 func (g *Gallery) GetPhotos(aid string) Photos {
+	// TODO: for each photo, add to Photos and eventually return Photos
 	return (*g.Albums)[aid].Added
 }
 
