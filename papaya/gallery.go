@@ -183,8 +183,10 @@ func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
 	}
 
 	// Create a new file to save the image
-	pid := fmt.Sprintf("%s.png", uuid.New().String())
-	photoFile := filepath.Join(GALLERY_DIR, aid, pid)
+	pid := uuid.New().String()
+	// TODO: Must determine this based on image type
+	photoFileName := fmt.Sprintf("%s.png", pid)
+	photoFile := filepath.Join(GALLERY_DIR, aid, photoFileName)
 	f, err := os.Create(photoFile)
 	if err != nil {
 		return "", fmt.Errorf("failed to create file: %w", err)
