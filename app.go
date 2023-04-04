@@ -23,8 +23,9 @@ import (
 const PROTOCOL_ID = "p2p"
 
 func main() {
+	l := log.New(os.Stdout, "", log.Lshortfile|log.Ltime)
+
 	// Instantiate Gallery
-	l := log.New(os.Stdout, "memory-lane ", log.LstdFlags)
 	g, err := papaya.NewGallery(l)
 	if err != nil {
 		l.Fatal("error while instantiating gallery: ", err)
