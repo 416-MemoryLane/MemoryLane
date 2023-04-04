@@ -270,10 +270,13 @@ func (g *Gallery) GetPhotos(aid string) Photos {
 // Retrieve the photo from an album
 func (g *Gallery) GetPhoto(aid string, pid string) (*Photo, error) {
 	// Construct the file path to the photo based on the album ID and photo ID
-	photoPath := filepath.Join(GALLERY_DIR, aid, pid)
+	photoPath, err := filepath.Glob(filepath.Join(GALLERY_DIR, aid, pid+"*"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find any photos matching %s: %w", photoPath, err)
+	}
 
 	// Read the photo file into memory
-	photoData, err := os.ReadFile(photoPath)
+	photoData, err := os.ReadFile(photoPath[0])
 	if err != nil {
 		// If there was an error reading the file, return it
 		return nil, fmt.Errorf("error reading photo file: %v", err)
