@@ -43,12 +43,12 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			// If there is a deleted photo in the sender node but not the current node
 			if msgOk && msgVal && (!albumDeletedOk || !albumDeletedVal) {
 				// Reconcile file system and CRDT
+				// TODO: wh.Gallery.DeletePhoto and albumCrdt.DeletePhoto should be atomic
 				_, err := wh.Gallery.DeletePhoto(msgAlbumId, p)
 				if err != nil {
 					wh.l.Printf("error deleting photo while reconciling node: %v\n", err)
 					continue
 				}
-				// TODO: albumCrdt.DeletePhoto and wh.Gallery.DeletePhoto should be atomic
 				err = albumCrdt.DeletePhoto(p)
 				if err != nil {
 					wh.l.Printf("error reconciling CRDT in a delete operation: %v\n", err)
