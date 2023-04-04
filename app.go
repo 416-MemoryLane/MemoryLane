@@ -76,15 +76,15 @@ func main() {
 		}
 
 		// Retrieve album directories from filesystem and create a stream for each album
-		for _, album := range *g.GetAlbums() {
-			aid := album.Crdt.Album
+		for _, crdt := range *g.GetAlbums() {
+			aid := crdt.Album
 			l.Println("Creating a stream for album:", aid)
 
 			// Construct initial wingmanMsg
 			wingmanMsg := wingman.WingmanMessage{
 				SenderMultiAddr: maddr,
 				Album:           aid,
-				Crdt:            album.Crdt,
+				Crdt:            crdt,
 				Photos:          nil,
 			}
 
@@ -97,12 +97,12 @@ func main() {
 
 				ticker := time.NewTicker(3 * time.Second)
 				for range ticker.C {
-					album := g.GetAlbum(aid)
+					crdt := g.GetAlbum(aid)
 
 					wingmanMsg = wingman.WingmanMessage{
 						SenderMultiAddr: maddr,
 						Album:           aid,
-						Crdt:            album.Crdt,
+						Crdt:            crdt,
 						Photos:          nil,
 					}
 

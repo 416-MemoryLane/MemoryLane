@@ -15,14 +15,14 @@ import (
 
 type Gallery struct {
 	l      *log.Logger
-	Albums Albums
+	Albums raccoon.Albums
 }
 
 const GALLERY_DIR = "./memory-lane-gallery"
 
 // Initialize a new gallery based on existing gallery in filesystem or create a new one if one doesn't exist
 func NewGallery(l *log.Logger) (*Gallery, error) {
-	gallery := &Gallery{l, &map[string]*Album{}}
+	gallery := &Gallery{l, &map[string]*raccoon.CRDT{}}
 
 	// Define the path to the gallery directory
 	galleryDir := "./memory-lane-gallery"
@@ -44,16 +44,14 @@ func NewGallery(l *log.Logger) (*Gallery, error) {
 			return nil, err
 		}
 
-		albums := &map[string]*Album{}
+		albums := &map[string]*raccoon.CRDT{}
 		gallery.Albums = albums
 		for _, dir := range dirs {
 			if dir.IsDir() {
 				// Instantiate new album
 				dirName := dir.Name()
-				crdt := &raccoon.CRDT{}
-				photos := &map[string]bool{}
-				album := &Album{crdt, photos}
-				(*albums)[dirName] = album
+				crdt := raccoon.NewCRDT(gallery.l)
+				(*albums)[dirName] = crdt
 
 				// Read all photos and CRDT to use to instantiate
 				albumDir := filepath.Join(galleryDir, dirName)
@@ -74,21 +72,15 @@ func NewGallery(l *log.Logger) (*Gallery, error) {
 
 					if fileName == "crdt.json" {
 						// If crdt.json, deserialize to CRDT struct
-						crdt, err = raccoon.NewCRDT(l)
-						if err != nil {
-							return nil, err
-						}
+						crdt = raccoon.NewCRDT(l)
 						err = crdt.UnmarshalJSON(data)
 						if err != nil {
 							return nil, err
 						}
 
-						// Must add to album.Crdt here even though its pointer has been added to the album
-						album.Crdt = crdt
+						// Add crdt to albums
+						(*albums)[dirName] = crdt
 
-					} else {
-						// Else add to album's map of photos
-						(*photos)[fileName] = true
 					}
 				}
 			}
@@ -107,18 +99,15 @@ func NewGallery(l *log.Logger) (*Gallery, error) {
 }
 
 // Create a new album
-func (g *Gallery) CreateAlbum(albumName string) (*Album, error) {
+func (g *Gallery) CreateAlbum(albumName string) (*raccoon.CRDT, error) {
 	// Initialise new CRDT with provided album name
-	crdt, err := raccoon.NewCRDT(g.l)
-	if err != nil {
-		return nil, err
-	}
+	crdt := raccoon.NewCRDT(g.l)
 	crdt.AlbumName = albumName
 
 	// Create a new album directory
 	dirName := crdt.Album
 	albumDir := filepath.Join(GALLERY_DIR, dirName)
-	err = os.Mkdir(albumDir, os.ModeDir|0777)
+	err := os.Mkdir(albumDir, os.ModeDir|0777)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create album: %w", err)
 	}
@@ -134,13 +123,10 @@ func (g *Gallery) CreateAlbum(albumName string) (*Album, error) {
 		return nil, fmt.Errorf("failed to write file %s: %w", crdtFile, err)
 	}
 
-	// Initialise a new album
-	album := &Album{crdt, &map[string]bool{}}
-
 	// Add album to gallery
-	(*g.Albums)[dirName] = album
+	(*g.Albums)[dirName] = crdt
 
-	return album, nil
+	return crdt, nil
 }
 
 // Delete an album if it exists
@@ -159,20 +145,20 @@ func (g *Gallery) DeleteAlbum(aid string) error {
 }
 
 // Retrieve all the albums (i.e. directories of photos) that the user is part of
-func (g *Gallery) GetAlbums() Albums {
+func (g *Gallery) GetAlbums() raccoon.Albums {
 	return g.Albums
 }
 
 // Get an album. Return nil if the album does not exist
 // TODO: This will likely be more complicated as it will be required to create the message to send to another node
-func (g *Gallery) GetAlbum(aid string) *Album {
+func (g *Gallery) GetAlbum(aid string) *raccoon.CRDT {
 	return (*g.Albums)[aid]
 }
 
 // Add a photo to an album if the album exists
 func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
-	album := (*g.Albums)[aid]
-	if album == nil {
+	crdt := (*g.Albums)[aid]
+	if crdt == nil {
 		return "", fmt.Errorf("album %s does not exist", aid)
 	}
 
@@ -199,9 +185,9 @@ func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
 	}
 
 	// Add photo to CRDT and write to file
-	album.Crdt.AddPhoto(pid)
+	crdt.AddPhoto(pid)
 	crdtFile := filepath.Join(GALLERY_DIR, aid, "crdt.json")
-	jsonData, err := album.Crdt.MarshalJSON()
+	jsonData, err := crdt.MarshalJSON()
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal JSON data: %w", err)
 	}
@@ -209,36 +195,36 @@ func (g *Gallery) AddPhoto(aid string, photo []byte) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to write file %s: %w", crdtFile, err)
 	}
-
-	// Add photo to the Album
-	(*album.Photos)[pid] = true
 
 	return pid, nil
 }
 
 // Delete a photo from an album
 func (g *Gallery) DeletePhoto(aid string, pid string) (string, error) {
-	album := (*g.Albums)[aid]
-	if album == nil {
+	crdt := (*g.Albums)[aid]
+	if crdt == nil {
 		return "", fmt.Errorf("album %s does not exist", aid)
 	}
 
-	photo := (*album.Photos)[pid]
+	photo := (*crdt.Added)[pid]
 	if !photo {
 		return "", fmt.Errorf("photo %s does not exist", pid)
 	}
 
 	// Delete album from filesystem
-	photoFile := filepath.Join(GALLERY_DIR, aid, pid)
-	err := os.Remove(photoFile)
+	photoFile, err := filepath.Glob(filepath.Join(GALLERY_DIR, aid, pid+"*"))
+	if err != nil {
+		return "", fmt.Errorf("failed to find any photos matching %s: %w", photoFile, err)
+	}
+	err = os.Remove(photoFile[0])
 	if err != nil {
 		return "", fmt.Errorf("failed to delete photo %s: %w", photoFile, err)
 	}
 
 	// Remove photo from CRDT and write to file
-	album.Crdt.DeletePhoto(pid)
+	crdt.DeletePhoto(pid)
 	crdtFile := filepath.Join(GALLERY_DIR, aid, "crdt.json")
-	jsonData, err := album.Crdt.MarshalJSON()
+	jsonData, err := crdt.MarshalJSON()
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal JSON data: %w", err)
 	}
@@ -247,15 +233,12 @@ func (g *Gallery) DeletePhoto(aid string, pid string) (string, error) {
 		return "", fmt.Errorf("failed to write file %s: %w", crdtFile, err)
 	}
 
-	// Remove photo from Album
-	delete(*album.Photos, pid)
-
 	return pid, nil
 }
 
-// Retrieve all the photo file names of an album
+// Retrieve all the photo ids of an album
 func (g *Gallery) GetPhotos(aid string) Photos {
-	return (*g.Albums)[aid].Photos
+	return (*g.Albums)[aid].Added
 }
 
 // Retrieve the photo from an album

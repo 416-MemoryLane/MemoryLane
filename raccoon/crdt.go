@@ -20,21 +20,9 @@ type CRDT struct {
 	l *log.Logger
 }
 
-type AlbumId uuid.UUID
+type Albums *map[string]*CRDT
 
-// Convert the AlbumId to string
-func (aid AlbumId) String() string {
-	return uuid.UUID(aid).String()
-}
-
-type PhotoId uuid.UUID
-
-// Convert the PhotoId to string
-func (aid PhotoId) String() string {
-	return uuid.UUID(aid).String()
-}
-
-func NewCRDT(l *log.Logger) (*CRDT, error) {
+func NewCRDT(l *log.Logger) *CRDT {
 	c := CRDT{
 		&map[string]bool{},
 		&map[string]bool{},
@@ -46,7 +34,7 @@ func NewCRDT(l *log.Logger) (*CRDT, error) {
 		l,
 	}
 
-	return &c, nil
+	return &c
 }
 
 func (c *CRDT) AddPhoto(pid string) {
