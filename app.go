@@ -30,7 +30,7 @@ func main() {
 	if err != nil {
 		l.Fatal("error while instantiating gallery: ", err)
 	}
-	l.Println(g)
+	l.Println("Gallery instantiated")
 
 	// Start a libp2p node
 	node, err := libp2p.New()
@@ -77,7 +77,12 @@ func main() {
 		}
 
 		// Retrieve album directories from filesystem and create a stream for each album
-		for _, crdt := range *g.GetAlbums() {
+		albumCRDTs, err := g.GetAlbumCRDTs()
+		if err != nil {
+			l.Fatalf("failed retrieving album CRDTs: %v", err)
+		}
+
+		for _, crdt := range *albumCRDTs {
 			aid := crdt.Album
 			l.Println("Creating a stream for album:", aid)
 
@@ -98,7 +103,7 @@ func main() {
 
 				ticker := time.NewTicker(3 * time.Second)
 				for range ticker.C {
-					crdt, err := g.GetAlbum(aid)
+					crdt, err := g.GetAlbumCRDT(aid)
 					if err != nil {
 						l.Fatalf("failed retrieving crdt: %v", err)
 					}

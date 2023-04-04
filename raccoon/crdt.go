@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-
-	"github.com/google/uuid"
+	"os"
+	"path/filepath"
 )
+
+// TODO: Add as a field in the CRDT struct (`json:-`)
+const GALLERY_DIR = "./memory-lane-gallery"
 
 type CRDT struct {
 	Added   *map[string]bool `json:"-"`
@@ -20,15 +23,15 @@ type CRDT struct {
 	l *log.Logger
 }
 
-type Albums *map[string]*CRDT
+type CRDTs *map[string]*CRDT
 
-func NewCRDT(l *log.Logger) *CRDT {
+func NewCRDT(albumId, albumName string, l *log.Logger) *CRDT {
 	c := CRDT{
 		&map[string]bool{},
 		&map[string]bool{},
 
-		uuid.New().String(),
-		"",
+		albumId,
+		albumName,
 		&[]string{},
 		&[]string{},
 		l,
@@ -37,13 +40,47 @@ func NewCRDT(l *log.Logger) *CRDT {
 	return &c
 }
 
-func (c *CRDT) AddPhoto(pid string) {
-	(*c.Added)[pid] = true
+// Write CRDT data into the filesystem
+func (c *CRDT) PersistCRDT() error {
+	crdtFile := filepath.Join(GALLERY_DIR, c.Album, "crdt.json")
+	jsonData, err := c.MarshalJSON()
+	if err != nil {
+		return fmt.Errorf("failed to marshal CRDT JSON data: %w", err)
+	}
+	err = os.WriteFile(crdtFile, jsonData, 0777)
+	if err != nil {
+		return fmt.Errorf("failed to write CRDT file: %w", err)
+	}
+
+	return nil
 }
 
-func (c *CRDT) DeletePhoto(pid string) {
+// Add photo to CRDT and persist to filesystem
+func (c *CRDT) AddPhoto(pid string) error {
+	(*c.Added)[pid] = true
+
+	err := c.PersistCRDT()
+	if err != nil {
+		delete(*c.Added, pid)
+		return err
+	}
+
+	return nil
+}
+
+// Add deleted photo to CRDT and persist to filesystem
+func (c *CRDT) DeletePhoto(pid string) error {
 	delete(*c.Added, pid)
 	(*c.Deleted)[pid] = true
+
+	err := c.PersistCRDT()
+	if err != nil {
+		delete(*c.Deleted, pid)
+		(*c.Added)[pid] = true
+		return err
+	}
+
+	return nil
 }
 
 func (c *CRDT) UnmarshalJSON(d []byte) error {

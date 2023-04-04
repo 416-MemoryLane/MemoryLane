@@ -3,11 +3,7 @@ package wingman
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"memory-lane/app/papaya"
-	"memory-lane/app/raccoon"
-	"os"
-	"path/filepath"
 
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/protocol"
@@ -33,7 +29,7 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 		msgCrdt := d.Crdt
 
 		// Retrieve CRDT from filesystem
-		albumCrdt, err := wh.Gallery.GetAlbum(msgAlbumId)
+		albumCrdt, err := wh.Gallery.GetAlbumCRDT(msgAlbumId)
 		if err != nil {
 			wh.l.Printf("error retrieving album's crdt: %v\n", err)
 			continue
@@ -52,7 +48,6 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 
 				// Reconcile file system and CRDT
 				albumCrdt.AddPhoto(p)
-				persistCrdt(msgAlbumId, albumCrdt)
 				if albumPhoto != nil {
 					_, err := wh.Gallery.DeletePhoto(msgAlbumId, p)
 					if err != nil {
@@ -61,7 +56,6 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 					}
 				}
 				albumCrdt.DeletePhoto(p)
-				persistCrdt(msgAlbumId, albumCrdt)
 			}
 		}
 
@@ -80,13 +74,15 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 					}
 				}
 				albumCrdt.AddPhoto(p)
-				persistCrdt(msgAlbumId, albumCrdt)
 			}
 		}
 
 		// Create a message of photos to send to sender node
 		var photosToSend map[string]*papaya.Photo
-		albumPhotos := wh.Gallery.GetPhotos(msgAlbumId)
+		albumPhotos, err := wh.Gallery.GetPhotos(msgAlbumId)
+		if err != nil {
+			wh.l.Printf("error getting photos: %v\n", err)
+		}
 		for p := range *albumPhotos {
 			if photosToSend == nil {
 				photosToSend = make(map[string]*papaya.Photo)
@@ -131,26 +127,8 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			wh.l.Printf("sent msg to: %v\n for album: %v from handler\n", wh.Multiaddr, msgAlbumId)
 		}
 
-		// Persist reconciled CRDT to filesystem
-		persistCrdt(msgAlbumId, albumCrdt)
-
 		// In the following cases, there is nothing to reconcile:
 		// if the album states are equal
 		// or if difference between album states is that the incoming album state is missing deletes
 	}
-}
-
-func persistCrdt(aid string, crdt *raccoon.CRDT) error {
-	// Persist reconciled CRDT to filesystem
-	crdtFile := filepath.Join(papaya.GALLERY_DIR, aid, "crdt.json")
-	jsonData, err := crdt.MarshalJSON()
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON data: %v", err)
-	}
-	err = os.WriteFile(crdtFile, jsonData, 0777)
-	if err != nil {
-		return fmt.Errorf("failed to write file %s: %v", crdtFile, err)
-	}
-
-	return nil
 }
