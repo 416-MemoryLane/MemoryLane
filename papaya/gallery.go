@@ -12,8 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/google/uuid"
 )
 
 type Gallery struct {
@@ -159,7 +157,7 @@ func (g *Gallery) GetAlbum(aid string) *raccoon.CRDT {
 }
 
 // Add a photo to an album if the album exists
-func (g *Gallery) AddPhoto(aid string, photo Photo) (string, error) {
+func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, error) {
 	crdt := (*g.Albums)[aid]
 	if crdt == nil {
 		return "", fmt.Errorf("album %s does not exist", aid)
@@ -177,8 +175,6 @@ func (g *Gallery) AddPhoto(aid string, photo Photo) (string, error) {
 		return "", fmt.Errorf("failed to convert bytes to img: %w", err)
 	}
 
-	// Create a new file for the image
-	pid := uuid.New().String()
 	// TODO: Must determine this based on image type
 	photoFileName := fmt.Sprintf("%s.png", pid)
 	photoFile := filepath.Join(GALLERY_DIR, aid, photoFileName)

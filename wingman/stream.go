@@ -63,7 +63,7 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 
 				// Reconcile file system and CRDT
 				if !albumAddedOk || !albumAddedVal {
-					_, err := wh.Gallery.AddPhoto(msgAlbumId, *(*msgPhotos)[p])
+					_, err := wh.Gallery.AddPhotoWithFileName(msgAlbumId, p, *(*msgPhotos)[p])
 					if err != nil {
 						wh.l.Printf("error adding photo while reconciling node: %v\n", err)
 						continue
