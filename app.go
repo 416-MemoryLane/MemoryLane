@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
+	gc "memory-lane/app/galactus_client"
 	"memory-lane/app/papaya"
 	"memory-lane/app/wingman"
 	"net"
@@ -24,6 +26,30 @@ const PROTOCOL_ID = "p2p"
 
 func main() {
 	l := log.New(os.Stdout, "", log.Lshortfile|log.Ltime)
+
+	// Define flags
+	unFlag := "user"
+	pwFlag := "password"
+	unPtr := flag.String(unFlag, "", "User")
+	pwPtr := flag.String(pwFlag, "", "Password")
+
+	// Parse command line arguments
+	flag.Parse()
+
+	// Access flag values
+	un := *unPtr
+	pw := *pwPtr
+
+	// Check if required flags are provided
+	if un == "" || pw == "" {
+		l.Printf("Please provide both --%s and --%s flags\n", unFlag, pwFlag)
+		return
+	}
+
+	// Instantiate Galactus Client and log in
+	gc.NewGalactusClient(l)
+	// TODO: login via Galactus
+	l.Printf("User %s logged in", un)
 
 	// Instantiate Gallery
 	g, err := papaya.NewGallery(l)
