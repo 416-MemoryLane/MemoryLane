@@ -6,6 +6,8 @@ type AuthInfo struct {
 // TODO: requirements:
 // 		Login: username + password + multiaddr -> token + all relevant albums + all relevant multiaddrs
 // 		Sync: token + multiaddr -> all relevant albums + all relevant multiaddrs
+//		Will there ever be a case where we add an album WITHOUT updating Galactus?
+//		Can we add users to an album after creation?
 
 // Endpoint used to log authenticate user through Galactus
 // The same endpoint can be used for new and returning users
