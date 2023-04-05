@@ -110,7 +110,7 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			}
 
 			// Connect to the node at the given address
-			peerAddrInfo := MultiaddrStrToPeerAddrInfo(d.SenderMultiAddr, wh.l)
+			peerAddrInfo := wh.MultiaddrStrToPeerAddrInfo(d.SenderMultiAddr)
 			if err := (*wh.Node).Connect(context.Background(), *peerAddrInfo); err != nil {
 				panic(err)
 			}
