@@ -1,4 +1,5 @@
 import { WebSocket, WebSocketServer } from "ws";
+import { getAlbums } from "./app.mjs";
 
 export const wss = new WebSocketServer({ noServer: true });
 
@@ -21,6 +22,7 @@ wss.on("connection", (ws, req) => {
     type: "connection",
   });
 
+  sendMessage("albums", getAlbums());
   ws.on("message", (data) => {
     handleMessage({ ws, data });
   });

@@ -34,7 +34,7 @@ const getPhotoUuid = (fileName) => {
   return fileName.split(".").at(0);
 };
 
-const getAlbums = () => {
+export const getAlbums = () => {
   return fs
     .readdirSync(GALLERY_DIR, { withFileTypes: true })
     .map((album) => {

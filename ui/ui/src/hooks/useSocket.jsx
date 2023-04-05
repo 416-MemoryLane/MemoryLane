@@ -37,6 +37,7 @@ export const useSocket = (setAlbums = () => null) => {
             break;
           }
           case "albums": {
+            console.log(data.message)
             setAlbums(data.message);
             break;
           }

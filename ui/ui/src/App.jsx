@@ -44,22 +44,9 @@ function App() {
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
 
-  const fetchAlbums = async () => {
-    try {
-      const res = await fetch("http://localhost:4321/albums");
-      if (res.ok) {
-        const json = await res.json();
-        setAlbums(json);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   useSocket(setAlbums);
 
   useEffect(() => {
-    fetchAlbums();
     const token = localStorage.getItem("galactus-token");
     const user = localStorage.getItem("galactus-user");
     if (!!token && !!user) {
@@ -346,7 +333,7 @@ function App() {
                   </div>
                 </div>
                 <div className="flex flex-row gap-5 flex-wrap">
-                  {(images.length > 4 ? images.splice(4) : images).map(
+                  {(images.length > 4 ? images.slice(0, 4) : images).map(
                     (image, i) => (
                       <img
                         key={`${title}-image-${i}`}
