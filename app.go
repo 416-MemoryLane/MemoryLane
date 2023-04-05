@@ -28,9 +28,9 @@ func main() {
 	l := log.New(os.Stdout, "", log.Lshortfile|log.Ltime)
 
 	// Define flags
-	unFlag := "user"
+	unFlag := "username"
 	pwFlag := "password"
-	unPtr := flag.String(unFlag, "", "User")
+	unPtr := flag.String(unFlag, "", "Username")
 	pwPtr := flag.String(pwFlag, "", "Password")
 
 	// Parse command line arguments
@@ -72,6 +72,7 @@ func main() {
 	gc.NewGalactusClient(un, pw, maddr, l)
 	// TODO: login via Galactus
 	l.Printf("User %s logged in", un)
+	l.Printf("Token: %s", loginResp)
 
 	// TODO: should replace with multiaddrs received from Galactus
 	peerAddrs := []string{
