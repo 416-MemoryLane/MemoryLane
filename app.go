@@ -69,7 +69,7 @@ func main() {
 	l.Println("Listening on:", maddr)
 
 	// Instantiate Galactus Client and log in
-	gc.NewGalactusClient(l)
+	gc.NewGalactusClient(un, pw, maddr, l)
 	// TODO: login via Galactus
 	l.Printf("User %s logged in", un)
 
