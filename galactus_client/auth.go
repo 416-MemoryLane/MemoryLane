@@ -3,6 +3,10 @@ package galactus_client
 type AuthInfo struct {
 }
 
+// TODO: requirements:
+// 		Login: username + password + multiaddr -> token + all relevant albums + all relevant multiaddrs
+// 		Sync: token + multiaddr -> all relevant albums + all relevant multiaddrs
+
 // Endpoint used to log authenticate user through Galactus
 // The same endpoint can be used for new and returning users
 // If a new user uses this endpoint to sign up, a new document will be created in the User collection in MongoDB
