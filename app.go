@@ -94,6 +94,7 @@ func main() {
 		}
 
 		for _, syncAlbum := range *syncResp {
+			// Initialize any albums missing in local filesystem
 			syncAlbumId := syncAlbum.AlbumID
 			if !(*albumIds)[syncAlbumId] {
 				_, err := g.AddAlbum(syncAlbumId, syncAlbum.AlbumName)
