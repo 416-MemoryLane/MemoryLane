@@ -46,11 +46,6 @@ func main() {
 		return
 	}
 
-	// Instantiate Galactus Client and log in
-	gc.NewGalactusClient(l)
-	// TODO: login via Galactus
-	l.Printf("User %s logged in", un)
-
 	// Instantiate Gallery
 	g, err := papaya.NewGallery(l)
 	if err != nil {
@@ -72,6 +67,11 @@ func main() {
 		handler.HandleStream(s)
 	})
 	l.Println("Listening on:", maddr)
+
+	// Instantiate Galactus Client and log in
+	gc.NewGalactusClient(l)
+	// TODO: login via Galactus
+	l.Printf("User %s logged in", un)
 
 	// TODO: should replace with multiaddrs received from Galactus
 	peerAddrs := []string{
