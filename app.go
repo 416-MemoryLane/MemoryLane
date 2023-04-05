@@ -21,12 +21,13 @@ import (
 )
 
 const PROTOCOL_ID = "p2p"
+const GALLERY_DIR = "./memory-lane-gallery"
 
 func main() {
 	l := log.New(os.Stdout, "", log.Lshortfile|log.Ltime)
 
 	// Instantiate Gallery
-	g, err := papaya.NewGallery(l)
+	g, err := papaya.NewGallery(GALLERY_DIR, l)
 	if err != nil {
 		l.Fatal("error while instantiating gallery: ", err)
 	}
