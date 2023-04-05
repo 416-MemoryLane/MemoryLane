@@ -93,6 +93,7 @@ func main() {
 			l.Fatalf("failed retrieving album IDs: %v", err)
 		}
 
+		peerAddrsToAlbums := map[string]*[]string{}
 		for _, syncAlbum := range *syncResp {
 			// Initialize any albums missing in local filesystem
 			syncAlbumId := syncAlbum.AlbumID
@@ -102,21 +103,34 @@ func main() {
 					l.Fatalf("failed reconciling gallery state: %v", err)
 				}
 			}
-		}
 
-		// Create map of addresses to their album IDs
-		// TODO: Create stream to each
-		peerAddrsToAlbums := map[string]*[]string{}
+			// Add to map of peer addresses to albums
+			for _, u := range syncAlbum.AuthorizedUsers {
+				if maddr != u {
+					_, ok := peerAddrsToAlbums[u]
+					if !ok {
+						peerAddrsToAlbums[u] = &[]string{}
+					}
+					as := peerAddrsToAlbums[u]
+
+					newAlbums := append(*as, syncAlbumId)
+					peerAddrsToAlbums[u] = &newAlbums
+				}
+
+			}
+		}
 
 		for addr, albums := range peerAddrsToAlbums {
 			// Parse the multiaddr string.
 			peerMA, err := multiaddr.NewMultiaddr(addr)
 			if err != nil {
-				l.Fatalf("failed parsing to peerMA: %v", err)
+				l.Printf("failed parsing to peerMA: %v", err)
+				continue
 			}
 			peerAddrInfo, err := peer.AddrInfoFromP2pAddr(peerMA)
 			if err != nil {
-				l.Fatalf("failed parsing to peer address info: %v", err)
+				l.Printf("failed parsing to peer address info: %v", err)
+				continue
 			}
 
 			// Connect to the node at the given address
