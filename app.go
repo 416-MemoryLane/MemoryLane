@@ -76,6 +76,13 @@ func main() {
 		l.Fatalf("Error logging in for user %s: %v", un, err)
 	}
 	l.Printf("%s", loginResp.Message)
+	gc.AuthToken = loginResp.Token
+
+	syncResp, err := gc.Sync()
+	if err != nil {
+		l.Fatalf("Error syncing with Galactus: %v", err)
+	}
+	l.Printf("Synced successfully with Galactus for %v albums\n", len(*syncResp))
 
 	// TODO: should replace with multiaddrs received from Galactus
 	peerAddrs := []string{
