@@ -44,6 +44,17 @@ func NewGallery(l *log.Logger) (*Gallery, error) {
 func (g *Gallery) CreateAlbum(albumName string) (*raccoon.CRDT, error) {
 	// Initialise new CRDT with provided album name and id
 	albumId := uuid.New().String()
+	crdt, err := g.AddAlbum(albumId, albumName)
+	if err != nil {
+		return nil, err
+	}
+
+	return crdt, nil
+}
+
+// Add a new album
+func (g *Gallery) AddAlbum(albumId, albumName string) (*raccoon.CRDT, error) {
+	// Initialise new CRDT with provided album name and id
 	crdt := raccoon.NewCRDT(albumId, albumName, g.l)
 
 	// Create a new album directory
@@ -72,6 +83,21 @@ func (g *Gallery) DeleteAlbum(aid string) error {
 	}
 
 	return nil
+}
+
+// Retrieve all the album IDs
+func (g *Gallery) GetAlbumIDs() (*map[string]bool, error) {
+	crdts, err := g.GetAlbumCRDTs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get album CRDTs while retrieving IDs")
+	}
+
+	ids := map[string]bool{}
+	for _, crdt := range *crdts {
+		ids[crdt.Album] = true
+	}
+
+	return &ids, nil
 }
 
 // Retrieve all the album CRDTs

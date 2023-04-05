@@ -87,13 +87,27 @@ func main() {
 		}
 		l.Printf("Synced successfully with Galactus for %v albums\n", len(*syncResp))
 
-		// TODO: should replace with multiaddrs received from Galactus
-		peerAddrs := []string{
-			// "/ip4/172.28.67.129/tcp/36891/p2p/12D3KooWMW1y5JcJ95DYJ7pssShb7F3bCWwWzvMZ81Yxa9jfQBbh",
-			// "/ip4/172.28.67.129/tcp/34263/p2p/12D3KooWJZMXwYo8GpAbDiezXFPwViKnjWT7NKDwe3njnM8frn4t",
+		// Reconcile gallery state
+		albumIds, err := g.GetAlbumIDs()
+		if err != nil {
+			l.Fatalf("failed retrieving album IDs: %v", err)
 		}
 
-		for _, addr := range peerAddrs {
+		for _, syncAlbum := range *syncResp {
+			syncAlbumId := syncAlbum.AlbumID
+			if !(*albumIds)[syncAlbumId] {
+				_, err := g.AddAlbum(syncAlbumId, syncAlbum.AlbumName)
+				if err != nil {
+					l.Fatalf("failed reconciling gallery state: %v", err)
+				}
+			}
+		}
+
+		// Create map of addresses to their album IDs
+		// TODO: Create stream to each
+		peerAddrsToAlbums := map[string]*[]string{}
+
+		for addr, albums := range peerAddrsToAlbums {
 			// Parse the multiaddr string.
 			peerMA, err := multiaddr.NewMultiaddr(addr)
 			if err != nil {
@@ -116,13 +130,13 @@ func main() {
 				l.Fatalf("failed opening a new stream: %v", err)
 			}
 
-			// Retrieve album directories from filesystem and create a stream for each album
-			albumCRDTs, err := g.GetAlbumCRDTs()
-			if err != nil {
-				l.Fatalf("failed retrieving album CRDTs: %v", err)
-			}
+			// Send message to each album
+			for _, aid := range *albums {
+				crdt, err := g.GetAlbumCRDT(aid)
+				if err != nil {
+					l.Fatalf("failed retrieving album CRDT: %v", err)
+				}
 
-			for _, crdt := range *albumCRDTs {
 				aid := crdt.Album
 				l.Println("Creating a stream for album:", aid)
 
