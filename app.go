@@ -80,6 +80,7 @@ func main() {
 
 	ticker := time.NewTicker(3 * time.Second)
 	for range ticker.C {
+		// Sync with Galactus
 		syncResp, err := gc.Sync()
 		if err != nil {
 			l.Fatalf("Error syncing with Galactus: %v", err)
