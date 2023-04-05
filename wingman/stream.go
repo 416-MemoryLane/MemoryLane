@@ -87,10 +87,10 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 			wh.l.Printf("error getting photos: %v\n", err)
 		}
 		for p := range *albumPhotos {
-			if photosToSend == nil {
-				photosToSend = make(map[string]*papaya.Photo)
-			}
 			if val, ok := (*msgCrdt.Added)[p]; !val || !ok {
+				if photosToSend == nil {
+					photosToSend = make(map[string]*papaya.Photo)
+				}
 				d, err := wh.Gallery.GetPhoto(msgAlbumId, p)
 				if err != nil {
 					wh.l.Printf("error retrieving photo while creating reply message: %v\n", err)
