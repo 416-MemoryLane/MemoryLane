@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
+	"memory-lane/app/galactus_client"
 	"memory-lane/app/papaya"
 	"memory-lane/app/wingman"
 	"net"
@@ -21,10 +23,30 @@ import (
 )
 
 const PROTOCOL_ID = "p2p"
+const GALACTUS_API = "https://memory-lane-381119.wl.r.appspot.com"
 const GALLERY_DIR = "./memory-lane-gallery"
 
 func main() {
 	l := log.New(os.Stdout, "", log.Lshortfile|log.Ltime)
+
+	// Define flags
+	unFlag := "username"
+	pwFlag := "password"
+	unPtr := flag.String(unFlag, "", "Username")
+	pwPtr := flag.String(pwFlag, "", "Password")
+
+	// Parse command line arguments
+	flag.Parse()
+
+	// Access flag values
+	un := *unPtr
+	pw := *pwPtr
+
+	// Check if required flags are provided
+	if un == "" || pw == "" {
+		l.Printf("Please provide both --%s and --%s flags\n", unFlag, pwFlag)
+		return
+	}
 
 	// Instantiate Gallery
 	g, err := papaya.NewGallery(GALLERY_DIR, l)
@@ -48,62 +70,108 @@ func main() {
 	})
 	l.Println("Listening on:", maddr)
 
-	// TODO: should replace with multiaddrs received from Galactus
-	peerAddrs := []string{
-		// "/ip4/172.28.67.129/tcp/36891/p2p/12D3KooWMW1y5JcJ95DYJ7pssShb7F3bCWwWzvMZ81Yxa9jfQBbh",
-		// "/ip4/172.28.67.129/tcp/34263/p2p/12D3KooWJZMXwYo8GpAbDiezXFPwViKnjWT7NKDwe3njnM8frn4t",
+	// Instantiate Galactus Client and log in
+	gc := galactus_client.NewGalactusClient(GALACTUS_API, un, pw, maddr, l)
+	loginResp, err := gc.Login()
+	if err != nil {
+		l.Fatalf("Error logging in for user %s: %v", un, err)
 	}
+	l.Printf("%s", loginResp.Message)
+	gc.AuthToken = loginResp.Token
 
-	for _, addr := range peerAddrs {
-		// Parse the multiaddr string.
-		peerMA, err := multiaddr.NewMultiaddr(addr)
+	ticker := time.NewTicker(3 * time.Second)
+	for range ticker.C {
+		// Sync with Galactus
+		syncResp, err := gc.Sync()
 		if err != nil {
-			l.Fatalf("failed parsing to peerMA: %v", err)
+			l.Fatalf("Error syncing with Galactus: %v", err)
 		}
-		peerAddrInfo, err := peer.AddrInfoFromP2pAddr(peerMA)
+		l.Printf("Synced successfully with Galactus for %v albums\n", len(*syncResp))
+
+		// Reconcile gallery state
+		albumIds, err := g.GetAlbumIDs()
 		if err != nil {
-			l.Fatalf("failed parsing to peer address info: %v", err)
+			l.Fatalf("failed retrieving album IDs: %v", err)
 		}
 
-		// Connect to the node at the given address
-		if err := node.Connect(context.Background(), *peerAddrInfo); err != nil {
-			panic(err)
-		}
-		l.Println("Connected to:", peerAddrInfo.String())
-
-		// Open a new stream to a connected node
-		s, err := node.NewStream(context.Background(), peerAddrInfo.ID, PROTOCOL_ID)
-		if err != nil {
-			l.Fatalf("failed opening a new stream: %v", err)
-		}
-
-		// Retrieve album directories from filesystem and create a stream for each album
-		albumCRDTs, err := g.GetAlbumCRDTs()
-		if err != nil {
-			l.Fatalf("failed retrieving album CRDTs: %v", err)
-		}
-
-		for _, crdt := range *albumCRDTs {
-			aid := crdt.Album
-			l.Println("Creating a stream for album:", aid)
-
-			// Construct initial wingmanMsg
-			wingmanMsg := wingman.WingmanMessage{
-				SenderMultiAddr: maddr,
-				Album:           aid,
-				Crdt:            crdt,
-				Photos:          nil,
+		peerAddrsToAlbums := map[string]*[]string{}
+		for _, syncAlbum := range *syncResp {
+			// Initialize any albums missing in local filesystem
+			syncAlbumId := syncAlbum.AlbumID
+			if !(*albumIds)[syncAlbumId] {
+				_, err := g.AddAlbum(syncAlbumId, syncAlbum.AlbumName)
+				if err != nil {
+					l.Fatalf("failed reconciling gallery state: %v", err)
+				}
 			}
 
-			go func() {
-				// Encode JSON data and send over stream
-				encoder := json.NewEncoder(s)
-				if err := encoder.Encode(&wingmanMsg); err != nil {
-					l.Fatalf("failed encoding message: %v", err)
+			// Add to map of peer addresses to albums
+			for _, u := range syncAlbum.AuthorizedUsers {
+				if maddr != u {
+					_, ok := peerAddrsToAlbums[u]
+					if !ok {
+						peerAddrsToAlbums[u] = &[]string{}
+					}
+					as := peerAddrsToAlbums[u]
+
+					newAlbums := append(*as, syncAlbumId)
+					peerAddrsToAlbums[u] = &newAlbums
 				}
 
-				ticker := time.NewTicker(3 * time.Second)
-				for range ticker.C {
+			}
+		}
+
+		for addr, albums := range peerAddrsToAlbums {
+			// Parse the multiaddr string.
+			peerMA, err := multiaddr.NewMultiaddr(addr)
+			if err != nil {
+				l.Printf("failed parsing to peerMA: %v", err)
+				continue
+			}
+			peerAddrInfo, err := peer.AddrInfoFromP2pAddr(peerMA)
+			if err != nil {
+				l.Printf("failed parsing to peer address info: %v", err)
+				continue
+			}
+
+			// Connect to the node at the given address
+			if err := node.Connect(context.Background(), *peerAddrInfo); err != nil {
+				l.Printf("failed to connect to peer: %v", err)
+				continue
+			}
+			l.Println("Connected to:", peerAddrInfo.String())
+
+			// Open a new stream to a connected node
+			s, err := node.NewStream(context.Background(), peerAddrInfo.ID, PROTOCOL_ID)
+			if err != nil {
+				l.Fatalf("failed opening a new stream: %v", err)
+			}
+
+			// Send message to each album
+			for _, aid := range *albums {
+				crdt, err := g.GetAlbumCRDT(aid)
+				if err != nil {
+					l.Fatalf("failed retrieving album CRDT: %v", err)
+				}
+
+				aid := crdt.Album
+				l.Println("Creating a stream for album:", aid)
+
+				// Construct initial wingmanMsg
+				wingmanMsg := wingman.WingmanMessage{
+					SenderMultiAddr: maddr,
+					Album:           aid,
+					Crdt:            crdt,
+					Photos:          nil,
+				}
+
+				go func() {
+					// Encode JSON data and send over stream
+					encoder := json.NewEncoder(s)
+					if err := encoder.Encode(&wingmanMsg); err != nil {
+						l.Fatalf("failed encoding message: %v", err)
+					}
+
 					crdt, err := g.GetAlbumCRDT(aid)
 					if err != nil {
 						l.Fatalf("failed retrieving crdt: %v", err)
@@ -118,12 +186,11 @@ func main() {
 
 					if err = encoder.Encode(&wingmanMsg); err != nil {
 						l.Printf("failed encoding message: %v\n", err)
-						continue
+					} else {
+						l.Printf("sent msg to: %v\n for album: %v\n", peerAddrInfo.String(), aid)
 					}
-
-					l.Printf("sent msg to: %v\n for album: %v\n", peerAddrInfo.String(), aid)
-				}
-			}()
+				}()
+			}
 		}
 	}
 
