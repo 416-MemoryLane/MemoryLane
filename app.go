@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	gc "memory-lane/app/galactus_client"
+	"memory-lane/app/galactus_client"
 	"memory-lane/app/papaya"
 	"memory-lane/app/wingman"
 	"net"
@@ -23,6 +23,7 @@ import (
 )
 
 const PROTOCOL_ID = "p2p"
+const GALACTUS_API = "https://memory-lane-381119.wl.r.appspot.com"
 
 func main() {
 	l := log.New(os.Stdout, "", log.Lshortfile|log.Ltime)
@@ -69,10 +70,12 @@ func main() {
 	l.Println("Listening on:", maddr)
 
 	// Instantiate Galactus Client and log in
-	gc.NewGalactusClient(un, pw, maddr, l)
-	// TODO: login via Galactus
-	l.Printf("User %s logged in", un)
-	l.Printf("Token: %s", loginResp)
+	gc := galactus_client.NewGalactusClient(GALACTUS_API, un, pw, maddr, l)
+	loginResp, err := gc.Login()
+	if err != nil {
+		l.Fatalf("Error logging in for user %s: %v", un, err)
+	}
+	l.Printf("%s", loginResp.Message)
 
 	// TODO: should replace with multiaddrs received from Galactus
 	peerAddrs := []string{
