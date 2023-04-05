@@ -135,7 +135,8 @@ func main() {
 
 			// Connect to the node at the given address
 			if err := node.Connect(context.Background(), *peerAddrInfo); err != nil {
-				panic(err)
+				l.Printf("failed to connect to peer: %v", err)
+				continue
 			}
 			l.Println("Connected to:", peerAddrInfo.String())
 
