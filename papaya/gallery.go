@@ -17,19 +17,18 @@ import (
 )
 
 type Gallery struct {
-	l *log.Logger
+	GalleryDir string
+	l          *log.Logger
 }
 
-const GALLERY_DIR = "./memory-lane-gallery"
-
 // Initialize a new gallery based on existing gallery in filesystem or create a new one if one doesn't exist
-func NewGallery(l *log.Logger) (*Gallery, error) {
-	gallery := &Gallery{l}
+func NewGallery(gd string, l *log.Logger) (*Gallery, error) {
+	g := &Gallery{gd, l}
 
 	// Try to open the gallery directory
-	if _, err := os.Stat(GALLERY_DIR); os.IsNotExist(err) {
+	if _, err := os.Stat(g.GalleryDir); os.IsNotExist(err) {
 		// If the gallery directory doesn't exist, create a new gallery directory and an empty album map
-		err = os.Mkdir(GALLERY_DIR, os.ModeDir|0777)
+		err = os.Mkdir(g.GalleryDir, os.ModeDir|0777)
 		if err != nil {
 			return nil, fmt.Errorf("error instantiating a gallery: %v", err)
 		}
@@ -37,7 +36,7 @@ func NewGallery(l *log.Logger) (*Gallery, error) {
 		return nil, fmt.Errorf("error trying to access gallery: %v", err)
 	}
 
-	return gallery, nil
+	return g, nil
 }
 
 // Create a new album
@@ -55,10 +54,10 @@ func (g *Gallery) CreateAlbum(albumName string) (*raccoon.CRDT, error) {
 // Add a new album
 func (g *Gallery) AddAlbum(albumId, albumName string) (*raccoon.CRDT, error) {
 	// Initialise new CRDT with provided album name and id
-	crdt := raccoon.NewCRDT(albumId, albumName, g.l)
+	crdt := raccoon.NewCRDT(g.GalleryDir, albumId, albumName, g.l)
 
 	// Create a new album directory
-	albumDir := filepath.Join(GALLERY_DIR, albumId)
+	albumDir := filepath.Join(g.GalleryDir, albumId)
 	err := os.Mkdir(albumDir, os.ModeDir|0777)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create album: %w", err)
@@ -76,7 +75,7 @@ func (g *Gallery) AddAlbum(albumId, albumName string) (*raccoon.CRDT, error) {
 // Delete an album if it exists
 func (g *Gallery) DeleteAlbum(aid string) error {
 	// Delete album from filesystem
-	albumDir := filepath.Join(GALLERY_DIR, aid)
+	albumDir := filepath.Join(g.GalleryDir, aid)
 	err := os.RemoveAll(albumDir)
 	if err != nil {
 		return fmt.Errorf("failed to delete album %s: %w", albumDir, err)
@@ -103,7 +102,7 @@ func (g *Gallery) GetAlbumIDs() (*map[string]bool, error) {
 // Retrieve all the album CRDTs
 func (g *Gallery) GetAlbumCRDTs() (raccoon.CRDTs, error) {
 	// Read the directory contents
-	albums, err := os.ReadDir(GALLERY_DIR)
+	albums, err := os.ReadDir(g.GalleryDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read gallery directory: %w", err)
 	}
@@ -125,7 +124,7 @@ func (g *Gallery) GetAlbumCRDTs() (raccoon.CRDTs, error) {
 // Get an album's CRDT
 func (g *Gallery) GetAlbumCRDT(aid string) (*raccoon.CRDT, error) {
 	// Read data from filesystem
-	crdtFile := filepath.Join(GALLERY_DIR, aid, "crdt.json")
+	crdtFile := filepath.Join(g.GalleryDir, aid, "crdt.json")
 	crdtData, err := os.ReadFile(crdtFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading crdt file: %v", err)
@@ -165,7 +164,7 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 	case "image/jpg":
 		suffix := "jpeg"
 		photoFileName := fmt.Sprintf("%s.%s", pid, suffix)
-		photoFile := filepath.Join(GALLERY_DIR, aid, photoFileName)
+		photoFile := filepath.Join(g.GalleryDir, aid, photoFileName)
 		f, err := os.Create(photoFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to create file: %w", err)
@@ -177,7 +176,7 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 	case "image/jpeg":
 		suffix := "jpeg"
 		photoFileName := fmt.Sprintf("%s.%s", pid, suffix)
-		photoFile := filepath.Join(GALLERY_DIR, aid, photoFileName)
+		photoFile := filepath.Join(g.GalleryDir, aid, photoFileName)
 		f, err := os.Create(photoFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to create file: %w", err)
@@ -189,7 +188,7 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 	case "image/png":
 		suffix := "png"
 		photoFileName := fmt.Sprintf("%s.%s", pid, suffix)
-		photoFile := filepath.Join(GALLERY_DIR, aid, photoFileName)
+		photoFile := filepath.Join(g.GalleryDir, aid, photoFileName)
 		f, err := os.Create(photoFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to create file: %w", err)
@@ -201,7 +200,7 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 	case "image/gif":
 		suffix := "gif"
 		photoFileName := fmt.Sprintf("%s.%s", pid, suffix)
-		photoFile := filepath.Join(GALLERY_DIR, aid, photoFileName)
+		photoFile := filepath.Join(g.GalleryDir, aid, photoFileName)
 		f, err := os.Create(photoFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to create file: %w", err)
@@ -242,7 +241,7 @@ func (g *Gallery) DeletePhoto(aid string, pid string) (string, error) {
 	}
 
 	// Delete photo from filesystem
-	photoFile, err := filepath.Glob(filepath.Join(GALLERY_DIR, aid, pid+"*"))
+	photoFile, err := filepath.Glob(filepath.Join(g.GalleryDir, aid, pid+"*"))
 	if err != nil {
 		return "", fmt.Errorf("failed to find any photos matching %s: %w", photoFile, err)
 	}
@@ -285,7 +284,7 @@ func (g *Gallery) GetPhotos(aid string) (Photos, error) {
 // Retrieve the photo from an album
 func (g *Gallery) GetPhoto(aid string, pid string) (*Photo, error) {
 	// Construct the file path to the photo based on the album ID and photo ID
-	photoPath, err := filepath.Glob(filepath.Join(GALLERY_DIR, aid, pid+"*"))
+	photoPath, err := filepath.Glob(filepath.Join(g.GalleryDir, aid, pid+"*"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to find any photos matching %s: %w", photoPath, err)
 	}

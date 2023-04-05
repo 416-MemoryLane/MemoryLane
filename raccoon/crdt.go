@@ -9,9 +9,10 @@ import (
 )
 
 // TODO: Add as a field in the CRDT struct (`json:-`)
-const GALLERY_DIR = "./memory-lane-gallery"
 
 type CRDT struct {
+	GalleryDir string `json:"-"`
+
 	Added   *map[string]bool `json:"-"`
 	Deleted *map[string]bool `json:"-"`
 
@@ -25,8 +26,10 @@ type CRDT struct {
 
 type CRDTs *map[string]*CRDT
 
-func NewCRDT(albumId, albumName string, l *log.Logger) *CRDT {
+func NewCRDT(gd, albumId, albumName string, l *log.Logger) *CRDT {
 	c := CRDT{
+		gd,
+
 		&map[string]bool{},
 		&map[string]bool{},
 
@@ -42,7 +45,7 @@ func NewCRDT(albumId, albumName string, l *log.Logger) *CRDT {
 
 // Write CRDT data into the filesystem
 func (c *CRDT) PersistCRDT() error {
-	crdtFile := filepath.Join(GALLERY_DIR, c.Album, "crdt.json")
+	crdtFile := filepath.Join(c.GalleryDir, c.Album, "crdt.json")
 	jsonData, err := c.MarshalJSON()
 	if err != nil {
 		return fmt.Errorf("failed to marshal CRDT JSON data: %w", err)

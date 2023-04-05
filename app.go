@@ -24,6 +24,7 @@ import (
 
 const PROTOCOL_ID = "p2p"
 const GALACTUS_API = "https://memory-lane-381119.wl.r.appspot.com"
+const GALLERY_DIR = "./memory-lane-gallery"
 
 func main() {
 	l := log.New(os.Stdout, "", log.Lshortfile|log.Ltime)
@@ -48,7 +49,7 @@ func main() {
 	}
 
 	// Instantiate Gallery
-	g, err := papaya.NewGallery(l)
+	g, err := papaya.NewGallery(GALLERY_DIR, l)
 	if err != nil {
 		l.Fatal("error while instantiating gallery: ", err)
 	}
