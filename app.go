@@ -3,176 +3,157 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"memory-lane/app/papaya"
+	"memory-lane/app/wingman"
 	"net"
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
+	"time"
 
 	"github.com/libp2p/go-libp2p"
-	network "github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 )
 
-type CrdtStruct struct {
-	Name     string
-	Commands []string
-	Image    []byte
-}
+const PROTOCOL_ID = "p2p"
 
-const protocolID = "pingPongCounter"
-
-// TODO: How to connect a front end?
-// TODO: contact galactus (http request) to register this node's multiaddr and Peer ID
-// TODO: retrieve other nodes multiaddr + Peer ID from Galactus and connect to them
-// TODO: perform necessary operations/routines with connected nodes (e.g. sync the albums, add/delete images etc.)
-// TODO: probably need some better error handling
 func main() {
-	l := log.New(os.Stdout, "memory-lane ", log.LstdFlags)
+	l := log.New(os.Stdout, "", log.Lshortfile|log.Ltime)
+
+	// Instantiate Gallery
 	g, err := papaya.NewGallery(l)
 	if err != nil {
 		l.Fatal("error while instantiating gallery: ", err)
 	}
-	l.Println(g)
+	l.Println("Gallery instantiated")
 
-	// Add -peer-address flag (this is currently given as a command line argument but will be provided by Galactus)
-	peerAddr := flag.String("peer-address", "", "peer address")
-	flag.Parse()
-
-	// start a libp2p node
+	// Start a libp2p node
 	node, err := libp2p.New()
 	if err != nil {
-		panic(err)
+		l.Fatalln(err)
 	}
-	// defer the close of the network connection
 	defer node.Close()
 
-	addrs := node.Addrs()
-	fmt.Println("Listening on (IP-multiaddrs):")
-	for _, addr := range addrs {
-		fmt.Printf("\t%s\n", addr.String())
-	}
-
-	// Extract private address to send to Galactus
-	var privateAddrs []multiaddr.Multiaddr
-	for _, addr := range addrs {
-		addrStr := addr.String()
-		addrSplit := strings.Split(addrStr, "/")
-		if addrSplit[1] == "ip4" && addrSplit[3] == "tcp" {
-			ip := net.ParseIP(addrSplit[2])
-			if ip != nil && ip.IsPrivate() {
-				privateAddrs = append(privateAddrs, addr)
-				fmt.Println("Private Address:", addrStr)
-			}
-		}
-	}
-	fmt.Println("Peer ID:", node.ID())
-	fmt.Println("Adress to connect to:", privateAddrs[0].String()+"/p2p/"+node.ID().String())
-	// Setup Stream Handlers
-	// This gets called when peer connects and opens a stream to this node
-	node.SetStreamHandler(protocolID, func(s network.Stream) {
-		go readCRDT(s)
-		crdtExample := CrdtStruct{
-			Name:     fmt.Sprintf("CRDT of PeerId %s", node.ID()),
-			Commands: []string{"delete photo"},
-			Image:    []byte{0x01, 0x02, 0x03, 0x04},
-		}
-		go writeCRDT(s, crdtExample)
+	// Extract multiaddr to send to Galactus
+	maddr := newMultiAddr(node, l)
+	node.SetStreamHandler(PROTOCOL_ID, func(s network.Stream) {
+		handler := wingman.NewWingmanHandler(maddr, PROTOCOL_ID, &node, g, l)
+		handler.HandleStream(s)
 	})
+	l.Println("Listening on:", maddr)
 
-	// Todo: remove the peer-address flag and use Galactus information for connection
-	// Connect to peer if peer address is provided as command line argument
-	if *peerAddr != "" {
+	// TODO: should replace with multiaddrs received from Galactus
+	peerAddrs := []string{
+		// "/ip4/172.28.67.129/tcp/36891/p2p/12D3KooWMW1y5JcJ95DYJ7pssShb7F3bCWwWzvMZ81Yxa9jfQBbh",
+		// "/ip4/172.28.67.129/tcp/34263/p2p/12D3KooWJZMXwYo8GpAbDiezXFPwViKnjWT7NKDwe3njnM8frn4t",
+	}
+
+	for _, addr := range peerAddrs {
 		// Parse the multiaddr string.
-		peerMA, err := multiaddr.NewMultiaddr(*peerAddr)
+		peerMA, err := multiaddr.NewMultiaddr(addr)
 		if err != nil {
-			panic(err)
+			l.Fatalf("failed parsing to peerMA: %v", err)
 		}
 		peerAddrInfo, err := peer.AddrInfoFromP2pAddr(peerMA)
 		if err != nil {
-			panic(err)
+			l.Fatalf("failed parsing to peer address info: %v", err)
 		}
 
 		// Connect to the node at the given address
 		if err := node.Connect(context.Background(), *peerAddrInfo); err != nil {
 			panic(err)
 		}
-		fmt.Println("Connected to", peerAddrInfo.String())
+		l.Println("Connected to:", peerAddrInfo.String())
 
-		// Open a stream with the given node
-		s, err := node.NewStream(context.Background(), peerAddrInfo.ID, protocolID)
+		// Open a new stream to a connected node
+		s, err := node.NewStream(context.Background(), peerAddrInfo.ID, PROTOCOL_ID)
 		if err != nil {
-			panic(err)
+			l.Fatalf("failed opening a new stream: %v", err)
 		}
 
-		// Start the write and read threads
-		go readCRDT(s)
-		crdtExample := CrdtStruct{
-			Name:     fmt.Sprintf("CRDT of PeerId %s", node.ID()),
-			Commands: []string{"add photo", "delete photo", "delete photo"},
-			Image:    []byte{0x01, 0x02, 0x03, 0x04},
+		// Retrieve album directories from filesystem and create a stream for each album
+		albumCRDTs, err := g.GetAlbumCRDTs()
+		if err != nil {
+			l.Fatalf("failed retrieving album CRDTs: %v", err)
 		}
-		go writeCRDT(s, crdtExample)
+
+		for _, crdt := range *albumCRDTs {
+			aid := crdt.Album
+			l.Println("Creating a stream for album:", aid)
+
+			// Construct initial wingmanMsg
+			wingmanMsg := wingman.WingmanMessage{
+				SenderMultiAddr: maddr,
+				Album:           aid,
+				Crdt:            crdt,
+				Photos:          nil,
+			}
+
+			go func() {
+				// Encode JSON data and send over stream
+				encoder := json.NewEncoder(s)
+				if err := encoder.Encode(&wingmanMsg); err != nil {
+					l.Fatalf("failed encoding message: %v", err)
+				}
+
+				ticker := time.NewTicker(3 * time.Second)
+				for range ticker.C {
+					crdt, err := g.GetAlbumCRDT(aid)
+					if err != nil {
+						l.Fatalf("failed retrieving crdt: %v", err)
+					}
+
+					wingmanMsg = wingman.WingmanMessage{
+						SenderMultiAddr: maddr,
+						Album:           aid,
+						Crdt:            crdt,
+						Photos:          nil,
+					}
+
+					if err = encoder.Encode(&wingmanMsg); err != nil {
+						l.Printf("failed encoding message: %v\n", err)
+						continue
+					}
+
+					l.Printf("sent msg to: %v\n for album: %v\n", peerAddrInfo.String(), aid)
+				}
+			}()
+		}
 	}
 
-	// wait for a SIGINT or SIGTERM signal (ctrl + c)
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	<-ch
+	// Gracefully shutdown node
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, os.Kill)
 
-	// shut the node down
+	sig := <-sigChan
+	l.Println("Received terminate, graceful shutdown", sig)
+
 	if err := node.Close(); err != nil {
 		panic(err)
 	}
 }
 
-/* Util Methods */
+func newMultiAddr(node host.Host, l *log.Logger) string {
+	var privateAddrs []multiaddr.Multiaddr
 
-// Send and Receive Data
-func writeCRDT(s network.Stream, crdt CrdtStruct) {
-	err := sendCRDT(crdt, s)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func readCRDT(s network.Stream) {
-	fmt.Println("Reading from stream")
-	for {
-		crdt, err := receiveCRDT(s)
-		if err != nil {
-			panic(err)
+	for _, addr := range node.Addrs() {
+		addrStr := addr.String()
+		addrSplit := strings.Split(addrStr, "/")
+		if addrSplit[1] == "ip4" && addrSplit[3] == "tcp" {
+			ip := net.ParseIP(addrSplit[2])
+			if ip != nil && ip.IsPrivate() {
+				privateAddrs = append(privateAddrs, addr)
+			}
 		}
-		// todo: process crdt
-		fmt.Println("Processing CRDT", crdt)
 	}
-}
 
-func sendCRDT(crdt CrdtStruct, s network.Stream) error {
-	data, err := json.Marshal(crdt)
-	if err != nil {
-		return err
-	}
-	_, err = s.Write(data)
-	fmt.Printf("Sending %s\n", string(data))
-	if err != nil {
-		return err
-	}
-	return nil
-}
+	multiaddr := fmt.Sprintf("%s/%s/%s", privateAddrs[0].String(), PROTOCOL_ID, node.ID().String())
 
-func receiveCRDT(s network.Stream) (CrdtStruct, error) {
-	var crdt CrdtStruct
-	err := json.NewDecoder(s).Decode(&crdt)
-	if err != nil {
-		return crdt, err
-	}
-	jsonCRDT, _ := json.Marshal(crdt)
-	fmt.Printf("Received %s\n", jsonCRDT)
-	return crdt, nil
+	return multiaddr
 }
