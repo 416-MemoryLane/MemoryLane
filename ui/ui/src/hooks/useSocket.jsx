@@ -11,7 +11,7 @@ export const useSocket = (setAlbums = () => null) => {
     }
 
     if (!socket && isConnecting) {
-      const conn = new WebSocket("ws://localhost:4321");
+      const conn = new WebSocket(`ws://${location.host}`);
 
       const ping = () => {
         setTimeout(() => {

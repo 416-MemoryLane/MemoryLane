@@ -5,12 +5,12 @@ import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import { sendMessage, wss } from "./socket.mjs";
 import watch from "node-watch";
+import getPort from 'get-port';
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-const port = 4321;
 const GALLERY_DIR = "../../memory-lane-gallery";
 const STATIC_PATH = "/static";
 
@@ -168,12 +168,17 @@ app.delete("/albums/:albumName/images/:imageName", (req, res) => {
   });
 });
 
-const server = app.listen(port, "0.0.0.0", () => {
-  console.log("Server running on port " + port);
-});
 
-server.on("upgrade", (req, socket, head) => {
-  wss.handleUpgrade(req, socket, head, (socket) => {
-    wss.emit("connection", socket, req);
+getPort().then((port) => {
+  // Start your server application using the port number
+  const server = app.listen(port, "0.0.0.0", () => {
+    console.log("Server running on port " + port);
+    console.log("Web UI accessible at http://localhost:" + port);
+  });
+
+  server.on("upgrade", (req, socket, head) => {
+    wss.handleUpgrade(req, socket, head, (socket) => {
+      wss.emit("connection", socket, req);
+    });
   });
 });
