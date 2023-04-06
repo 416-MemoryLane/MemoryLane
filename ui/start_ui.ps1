@@ -1,4 +1,3 @@
-
 Copy-Item -Path "..\.env" -Destination ".\server\.env"
 Set-Location -Path ".\ui"
 yarn
