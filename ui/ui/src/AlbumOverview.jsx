@@ -103,9 +103,9 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
       const user = localStorage.getItem("galactus-user");
       const token = localStorage.getItem("galactus-token");
       const galactusResponse = await fetch(
-        `https://memory-lane-381119.wl.r.appspot.com/delete_album?uuid=${albumId}&username=${user}`,
+        `https://memory-lane-381119.wl.r.appspot.com/leave_album?uuid=${albumId}&username=${user}`,
         {
-          method: "DELETE",
+          method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
           },
