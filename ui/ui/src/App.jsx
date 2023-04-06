@@ -317,41 +317,42 @@ function App() {
               )}
             </div>
           </div>
-          {albums.map(({ albumId, title, images }) => {
-            return (
-              <div
-                key={`${title}-album`}
-                className="flex-row w-full my-5 bg-slate-200 p-5 rounded-xl"
-              >
-                <div className="flex justify-between">
-                  <p className="text-2xl mb-3 font-semibold">{title}</p>
-                  <div className="ml-auto">
-                    <ArrowForwardIcon
-                      id={`${title}-forwardIcon`}
-                      className="cursor-pointer"
-                      onClick={() => handleAlbumSelection(title, albumId)}
-                    />
+          {currentUser &&
+            albums.map(({ albumId, title, images }) => {
+              return (
+                <div
+                  key={`${title}-album`}
+                  className="flex-row w-full my-5 bg-slate-200 p-5 rounded-xl"
+                >
+                  <div className="flex justify-between">
+                    <p className="text-2xl mb-3 font-semibold">{title}</p>
+                    <div className="ml-auto">
+                      <ArrowForwardIcon
+                        id={`${title}-forwardIcon`}
+                        className="cursor-pointer"
+                        onClick={() => handleAlbumSelection(title, albumId)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-row gap-5 flex-wrap">
+                    {(images.length > 4 ? images.slice(0, 4) : images).map(
+                      (image, i) => (
+                        <img
+                          key={`${title}-image-${i}`}
+                          className="object-cover w-[300px] h-[200px] rounded-lg"
+                          src={getEndpoint(`${image}`)}
+                        />
+                      )
+                    )}
+                    {!images.length && (
+                      <div className="h-[200px] w-full flex justify-center align-middle">
+                        <p className="text-2xl self-center">No images yet!</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="flex flex-row gap-5 flex-wrap">
-                  {(images.length > 4 ? images.slice(0, 4) : images).map(
-                    (image, i) => (
-                      <img
-                        key={`${title}-image-${i}`}
-                        className="object-cover w-[300px] h-[200px] rounded-lg"
-                        src={getEndpoint(`${image}`)}
-                      />
-                    )
-                  )}
-                  {!images.length && (
-                    <div className="h-[200px] w-full flex justify-center align-middle">
-                      <p className="text-2xl self-center">No images yet!</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
     </div>
