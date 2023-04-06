@@ -132,6 +132,8 @@ func (g *Gallery) GetAlbumCRDT(aid string) (*raccoon.CRDT, error) {
 
 	// Deserialize data into CRDT struct
 	crdt := &raccoon.CRDT{}
+	crdt.GalleryDir = g.GalleryDir
+
 	err = crdt.UnmarshalJSON(crdtData)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling crdt data: %v", err)
@@ -285,7 +287,7 @@ func (g *Gallery) GetPhotos(aid string) (Photos, error) {
 func (g *Gallery) GetPhoto(aid string, pid string) (*Photo, error) {
 	// Construct the file path to the photo based on the album ID and photo ID
 	photoPath, err := filepath.Glob(filepath.Join(g.GalleryDir, aid, pid+"*"))
-	if err != nil {
+	if err != nil || len(photoPath) == 0 {
 		return nil, fmt.Errorf("failed to find any photos matching %s: %w", photoPath, err)
 	}
 

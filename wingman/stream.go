@@ -47,7 +47,6 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 				_, err := wh.Gallery.DeletePhoto(msgAlbumId, p)
 				if err != nil {
 					wh.l.Printf("error deleting photo while reconciling node: %v\n", err)
-					continue
 				}
 				err = albumCrdt.DeletePhoto(p)
 				if err != nil {
