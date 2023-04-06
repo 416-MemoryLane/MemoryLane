@@ -251,7 +251,7 @@ function App() {
             <span className="flex">
               <p className="text-4xl">Memory Lane</p>
               <p className="ml-2 text-4xl text-slate-500">
-                {currentUser ? `(Logged in as ${currentUser})` : "(Offline)"}
+                {currentUser ? `(Logged in as ${currentUser})` : "(Loading...)"}
               </p>
             </span>
             <div className="flex gap-3">
