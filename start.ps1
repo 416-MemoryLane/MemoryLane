@@ -17,7 +17,7 @@ $go_pid = (Get-Job | Select-Object -Last 1).Id
 
 # run the UI in the background
 cd ui
-Start-Job -ScriptBlock { & ./start_ui.sh }
+Start-Job -ScriptBlock { & ./start_ui.ps1 }
 $ui_pid = (Get-Job | Select-Object -Last 1).Id
 
 try {
@@ -26,7 +26,6 @@ try {
 } finally {
     Write-Host "Received termination signal, stopping jobs."
     cd ..
-    Stop-Job $ui_pid -NoWait
-    Stop-Job $go_pid -NoWait
-    
+    Stop-Job $ui_pid -Wait
+    Stop-Job $go_pid -Wait
 }
