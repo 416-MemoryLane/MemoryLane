@@ -10,6 +10,7 @@ import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
 import Slideshow from "yet-another-react-lightbox/plugins/slideshow";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
+import { getEndpoint } from "./utils";
 
 export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
   const [index, setIndex] = useState(-1);
@@ -26,13 +27,10 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
       const formData = new FormData();
       formData.append("myfile", file);
       try {
-        const response = await fetch(
-          `/albums/${albumId}/images`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
+        const response = await fetch(getEndpoint(`/albums/${albumId}/images`), {
+          method: "POST",
+          body: formData,
+        });
         const data = await response.text();
         console.log(data);
       } catch (error) {
@@ -50,7 +48,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
           const width = img.width;
           const height = img.height;
           resolve({
-            src: `${image}`,
+            src: image,
             width: width,
             height: height,
             fileName: image.split("/").pop(),
@@ -59,7 +57,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
         img.onerror = () => {
           reject(new Error(`Failed to load image: ${image}`));
         };
-        img.src = `${image}`;
+        img.src = getEndpoint(image);
       });
     });
 
@@ -67,7 +65,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
       .then((results) => {
         const thumbnails = results.map((result) => {
           return {
-            src: result.src,
+            src: getEndpoint(result.src),
             width: result.width,
             height: result.height,
             fileName: result.fileName,
@@ -76,7 +74,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
         setThumbnails(thumbnails);
         setPhotos(
           results.map((result) => {
-            return { src: result.src };
+            return { src: getEndpoint(result.src) };
           })
         );
       })
@@ -88,7 +86,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
   const handleFileDelete = async (fileName) => {
     try {
       const response = await fetch(
-        `/albums/${albumId}/images/${fileName}`,
+        getEndpoint(`/albums/${albumId}/images/${fileName}`),
         {
           method: "DELETE",
         }
@@ -115,7 +113,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
       );
       if (galactusResponse.ok) {
         const uiServerResponse = await fetch(
-          `/albums/${albumId}`,
+          getEndpoint(`/albums/${albumId}`),
           {
             method: "DELETE",
           }

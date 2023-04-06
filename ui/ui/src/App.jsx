@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { MultiSelect } from "react-multi-select-component";
 import { v4 as uuidv4 } from "uuid";
 import { useSocket } from "./hooks/useSocket";
+import { getEndpoint } from "./utils";
 
 const toastOptions = {
   position: "top-center",
@@ -167,7 +168,7 @@ function App() {
       );
       const json = await res.json();
       if (res.ok) {
-        const res2 = await fetch("/albums", {
+        const res2 = await fetch(getEndpoint("/albums"), {
           method: "POST",
           body: JSON.stringify({
             albumName: newAlbumName,
@@ -338,7 +339,7 @@ function App() {
                       <img
                         key={`${title}-image-${i}`}
                         className="object-cover w-[300px] h-[200px] rounded-lg"
-                        src={`${image}`}
+                        src={getEndpoint(`${image}`)}
                       />
                     )
                   )}

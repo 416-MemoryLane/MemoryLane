@@ -5,7 +5,7 @@ import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import { sendMessage, wss } from "./socket.mjs";
 import watch from "node-watch";
-import getPort from 'get-port';
+import getPort from "get-port";
 
 const app = express();
 app.use(express.json());
@@ -168,12 +168,9 @@ app.delete("/albums/:albumName/images/:imageName", (req, res) => {
   });
 });
 
-
-getPort().then((port) => {
-  // Start your server application using the port number
-  const server = app.listen(port, "0.0.0.0", () => {
-    console.log("Server running on port " + port);
-    console.log("Web UI accessible at http://localhost:" + port);
+if (process.env.NODE_ENV === "development") {
+  const server = app.listen(4321, "0.0.0.0", () => {
+    console.log("Server running on port " + 4321);
   });
 
   server.on("upgrade", (req, socket, head) => {
@@ -181,4 +178,18 @@ getPort().then((port) => {
       wss.emit("connection", socket, req);
     });
   });
-});
+} else {
+  getPort().then((port) => {
+    // Start your server application using the port number
+    const server = app.listen(port, "0.0.0.0", () => {
+      console.log("Server running on port " + port);
+      console.log("Web UI accessible at http://localhost:" + port);
+    });
+
+    server.on("upgrade", (req, socket, head) => {
+      wss.handleUpgrade(req, socket, head, (socket) => {
+        wss.emit("connection", socket, req);
+      });
+    });
+  });
+}

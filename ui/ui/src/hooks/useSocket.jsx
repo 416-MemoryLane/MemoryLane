@@ -11,7 +11,12 @@ export const useSocket = (setAlbums = () => null) => {
     }
 
     if (!socket && isConnecting) {
-      const conn = new WebSocket(`ws://${location.host}`);
+      let conn;
+      if (process.env.NODE_ENV === "production") {
+        conn = new WebSocket(`ws://${location.host}`);
+      } else {
+        conn = new WebSocket(`ws://localhost:4321`);
+      }
 
       const ping = () => {
         setTimeout(() => {
@@ -37,7 +42,7 @@ export const useSocket = (setAlbums = () => null) => {
             break;
           }
           case "albums": {
-            console.log(data.message)
+            console.log(data.message);
             setAlbums(data.message);
             break;
           }
