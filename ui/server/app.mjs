@@ -7,8 +7,8 @@ import { sendMessage, wss } from "./socket.mjs";
 import watch from "node-watch";
 import getPort from "get-port";
 import open from "open";
-import dotenv from "dotenv";
-dotenv.config();
+import * as dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
 
 const app = express();
 app.use(express.json());
@@ -79,9 +79,13 @@ export const getAlbums = () => {
 };
 
 app.get("/login", (req, res) => {
+  console.log(process.env);
   res
     .status(200)
-    .send({ username: process.env.USERNAME, password: process.env.PASSWORD });
+    .send({
+      username: process.env.ML_USERNAME,
+      password: process.env.ML_PASSWORD,
+    });
 });
 
 app.get("/albums", (req, res) => {
