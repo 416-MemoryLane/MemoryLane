@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { sendMessage, wss } from "./socket.mjs";
 import watch from "node-watch";
 import getPort from "get-port";
+import open from "open";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -191,7 +192,10 @@ if (process.env.NODE_ENV === "development") {
     // Start your server application using the port number
     const server = app.listen(port, "0.0.0.0", () => {
       console.log("Server running on port " + port);
-      console.log("Web UI accessible at http://localhost:" + port);
+
+      const uiUrl = `http://localhost:${port}/`;
+      console.log(`Web UI accessible at ${uiUrl}`);
+      return open(uiUrl);
     });
 
     server.on("upgrade", (req, socket, head) => {
