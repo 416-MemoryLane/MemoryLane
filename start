@@ -5,14 +5,22 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
+# function to cleanup the background processes
+cleanup() {
+    echo "Received termination signal, stopping jobs."
+    kill $go_pid $ui_pid
+    exit 1
+}
+
+# trap the SIGINT signal and call the cleanup function
+trap cleanup SIGINT
+
 user=$1
 pass=$2
 
 # run the Go app in the background
 go mod download
 go run app.go --username $user --password $pass &
-
-# save the PID of the last background process
 go_pid=$!
 
 # run the UI in the background

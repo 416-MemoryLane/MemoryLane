@@ -10,15 +10,23 @@ $pass = $args[1]
 Start-Job -ScriptBlock {
     & go mod download
     & go run app.go --username $using:user --password $using:pass
-} | Out-Null
+}
 
 # save the PID of the last background process
 $go_pid = (Get-Job | Select-Object -Last 1).Id
 
 # run the UI in the background
 cd ui
-Start-Job -ScriptBlock { & ./start_ui.sh } | Out-Null
+Start-Job -ScriptBlock { & ./start_ui.sh }
 $ui_pid = (Get-Job | Select-Object -Last 1).Id
 
-# wait for both background processes to finish
-Wait-Job -Id $go_pid,$ui_pid | Out-Null
+try {
+    # tail the UI output in real-time
+    Receive-Job -Id $ui_pid -Wait
+} finally {
+    Write-Host "Received termination signal, stopping jobs."
+    cd ..
+    Stop-Job $ui_pid -NoWait
+    Stop-Job $go_pid -NoWait
+    
+}
