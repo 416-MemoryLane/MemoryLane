@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"memory-lane/app/galactus_client"
 	"memory-lane/app/papaya"
 	"memory-lane/app/wingman"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -55,6 +57,20 @@ func main() {
 	}
 	l.Println("Gallery instantiated")
 
+	// Get public IP address
+	resp, err := http.Get("https://api.ipify.org")
+	if err != nil {
+		l.Fatal("error while getting ip: ", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	ip, err := io.ReadAll(resp.Body)
+	if err != nil {
+		l.Fatal("error while reading ip:", err)
+		return
+	}
+
 	// Start a libp2p node
 	node, err := libp2p.New()
 	if err != nil {
@@ -63,7 +79,7 @@ func main() {
 	defer node.Close()
 
 	// Extract multiaddr to send to Galactus
-	maddr := newMultiAddr(node, l)
+	maddr := newMultiAddr(string(ip), node, l)
 	node.SetStreamHandler(PROTOCOL_ID, func(s network.Stream) {
 		handler := wingman.NewWingmanHandler(maddr, PROTOCOL_ID, &node, g, l)
 		handler.HandleStream(s)
@@ -207,7 +223,7 @@ func main() {
 	}
 }
 
-func newMultiAddr(node host.Host, l *log.Logger) string {
+func newMultiAddr(ipStr string, node host.Host, l *log.Logger) string {
 	var privateAddrs []multiaddr.Multiaddr
 
 	for _, addr := range node.Addrs() {
@@ -215,8 +231,14 @@ func newMultiAddr(node host.Host, l *log.Logger) string {
 		addrSplit := strings.Split(addrStr, "/")
 		if addrSplit[1] == "ip4" && addrSplit[3] == "tcp" {
 			ip := net.ParseIP(addrSplit[2])
+			addrSplit[2] = ipStr
+			multiaddrStr := strings.Join(addrSplit, "/")
+			mAddr, err := multiaddr.NewMultiaddr(multiaddrStr)
+			if err != nil {
+				l.Fatalf("error parsing multiaddr: %v", err)
+			}
 			if ip != nil && ip.IsPrivate() {
-				privateAddrs = append(privateAddrs, addr)
+				privateAddrs = append(privateAddrs, mAddr)
 			}
 		}
 	}
