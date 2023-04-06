@@ -27,7 +27,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
       formData.append("myfile", file);
       try {
         const response = await fetch(
-          `http://localhost:4321/albums/${albumId}/images`,
+          `/albums/${albumId}/images`,
           {
             method: "POST",
             body: formData,
@@ -50,7 +50,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
           const width = img.width;
           const height = img.height;
           resolve({
-            src: `http://localhost:4321${image}`,
+            src: `${image}`,
             width: width,
             height: height,
             fileName: image.split("/").pop(),
@@ -59,7 +59,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
         img.onerror = () => {
           reject(new Error(`Failed to load image: ${image}`));
         };
-        img.src = `http://localhost:4321${image}`;
+        img.src = `${image}`;
       });
     });
 
@@ -88,7 +88,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
   const handleFileDelete = async (fileName) => {
     try {
       const response = await fetch(
-        `http://localhost:4321/albums/${albumId}/images/${fileName}`,
+        `/albums/${albumId}/images/${fileName}`,
         {
           method: "DELETE",
         }
@@ -115,7 +115,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
       );
       if (galactusResponse.ok) {
         const uiServerResponse = await fetch(
-          `http://localhost:4321/albums/${albumId}`,
+          `/albums/${albumId}`,
           {
             method: "DELETE",
           }

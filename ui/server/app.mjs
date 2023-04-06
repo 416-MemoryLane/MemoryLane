@@ -26,6 +26,8 @@ watch(GALLERY_DIR, { recursive: true }, (_, name) => {
 
 app.use(STATIC_PATH, express.static(GALLERY_DIR));
 
+app.use("/", express.static("dist"));
+
 const getFileExtension = (fileName) => {
   return fileName.split(".").at(-1);
 };

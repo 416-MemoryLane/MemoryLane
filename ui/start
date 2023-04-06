@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd ui
+yarn build
+mv dist ../server/dist
+cd ../server
+yarn start

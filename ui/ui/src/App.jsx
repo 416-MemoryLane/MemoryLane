@@ -167,7 +167,7 @@ function App() {
       );
       const json = await res.json();
       if (res.ok) {
-        const res2 = await fetch("http://localhost:4321/albums", {
+        const res2 = await fetch("/albums", {
           method: "POST",
           body: JSON.stringify({
             albumName: newAlbumName,
@@ -338,7 +338,7 @@ function App() {
                       <img
                         key={`${title}-image-${i}`}
                         className="object-cover w-[300px] h-[200px] rounded-lg"
-                        src={`http://localhost:4321${image}`}
+                        src={`${image}`}
                       />
                     )
                   )}
