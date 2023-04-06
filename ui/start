@@ -2,6 +2,7 @@
 
 cd ui
 yarn build
+rm -rf ../server/dist
 mv dist ../server/dist
 cd ../server
 yarn start
