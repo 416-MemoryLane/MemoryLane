@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cp ../.env ./server/.env
 cd ui
 yarn
 yarn build

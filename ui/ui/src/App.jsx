@@ -48,12 +48,20 @@ function App() {
   useSocket(setAlbums);
 
   useEffect(() => {
-    const token = localStorage.getItem("galactus-token");
-    const user = localStorage.getItem("galactus-user");
-    if (!!token && !!user) {
-      setCurrentUser(user);
-    }
+    (async () => {
+      const loginDetails = await fetch(getEndpoint("/login"));
+      if (loginDetails.ok) {
+        const { username, password } = await loginDetails.json();
+        setCredentials({ username, password });
+      }
+    })();
   }, []);
+
+  useEffect(() => {
+    if (credentials.username && credentials.password) {
+      handleLogin(credentials.username, credentials.password);
+    }
+  }, [credentials]);
 
   useEffect(() => {
     if (currentUser) {
@@ -100,8 +108,9 @@ function App() {
   const notifySuccessfulLogout = (username) =>
     toast.success(`${username} successfully logged out`, toastOptions);
 
-  const handleLogin = async () => {
-    if (credentials.password.length < 4) {
+  const handleLogin = async (username, password) => {
+    console.log(username, password);
+    if (password.length < 4) {
       alert("Password should be greater than 4 characters.");
     } else {
       setIsLoading(true);
@@ -110,8 +119,8 @@ function App() {
         {
           method: "POST",
           body: JSON.stringify({
-            username: credentials.username,
-            password: credentials.password,
+            username: username,
+            password: password,
           }),
           headers: {
             "Content-Type": "application/json",
@@ -120,14 +129,13 @@ function App() {
       );
       const json = await res.json();
       if (res.ok) {
-        const user = credentials.username;
-        localStorage.setItem("galactus-user", user);
+        localStorage.setItem("galactus-user", username);
         localStorage.setItem("galactus-token", json.token);
-        setCurrentUser(user);
+        setCurrentUser(username);
         setCredentials(initialCredentials);
         setIsLoading(false);
         setIsLoginModalOpen(false);
-        notifySuccessfulLogin(user);
+        notifySuccessfulLogin(username);
       } else {
         notifyError(json.message);
         setIsLoading(false);

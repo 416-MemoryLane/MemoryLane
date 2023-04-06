@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import { sendMessage, wss } from "./socket.mjs";
 import watch from "node-watch";
 import getPort from "get-port";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 app.use(express.json());
@@ -74,6 +76,12 @@ export const getAlbums = () => {
     })
     .filter((album) => album !== null);
 };
+
+app.get("/login", (req, res) => {
+  res
+    .status(200)
+    .send({ username: process.env.USERNAME, password: process.env.PASSWORD });
+});
 
 app.get("/albums", (req, res) => {
   const albums = getAlbums();
