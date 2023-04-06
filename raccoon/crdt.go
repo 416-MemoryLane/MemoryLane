@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-
-	"github.com/google/uuid"
+	"os"
+	"path/filepath"
 )
 
+// TODO: Add as a field in the CRDT struct (`json:-`)
+
 type CRDT struct {
+	GalleryDir string `json:"-"`
+
 	Added   *map[string]bool `json:"-"`
 	Deleted *map[string]bool `json:"-"`
 
@@ -20,58 +24,73 @@ type CRDT struct {
 	l *log.Logger
 }
 
-type AlbumId uuid.UUID
+type CRDTs *map[string]*CRDT
 
-// Convert the AlbumId to string
-func (aid AlbumId) String() string {
-	return uuid.UUID(aid).String()
-}
-
-type PhotoId uuid.UUID
-
-// Convert the PhotoId to string
-func (aid PhotoId) String() string {
-	return uuid.UUID(aid).String()
-}
-
-func NewCRDT(l *log.Logger) (*CRDT, error) {
+func NewCRDT(gd, albumId, albumName string, l *log.Logger) *CRDT {
 	c := CRDT{
+		gd,
+
 		&map[string]bool{},
 		&map[string]bool{},
 
-		uuid.New().String(),
-		"",
+		albumId,
+		albumName,
 		&[]string{},
 		&[]string{},
 		l,
 	}
 
-	return &c, nil
+	return &c
 }
 
-func (c *CRDT) AddPhoto(pid string) {
+// Write CRDT data into the filesystem
+func (c *CRDT) PersistCRDT() error {
+	crdtFile := filepath.Join(c.GalleryDir, c.Album, "crdt.json")
+	jsonData, err := c.MarshalJSON()
+	if err != nil {
+		return fmt.Errorf("failed to marshal CRDT JSON data: %w", err)
+	}
+	err = os.WriteFile(crdtFile, jsonData, 0777)
+	if err != nil {
+		return fmt.Errorf("failed to write CRDT file: %w", err)
+	}
+
+	return nil
+}
+
+// Add photo to CRDT and persist to filesystem
+func (c *CRDT) AddPhoto(pid string) error {
 	(*c.Added)[pid] = true
+
+	err := c.PersistCRDT()
+	if err != nil {
+		delete(*c.Added, pid)
+		return err
+	}
+
+	return nil
 }
 
-func (c *CRDT) DeletePhoto(pid string) {
+// Add deleted photo to CRDT and persist to filesystem
+func (c *CRDT) DeletePhoto(pid string) error {
+	var isInAdded bool
+	if _, ok := (*c.Added)[pid]; ok {
+		isInAdded = true
+	}
+
 	delete(*c.Added, pid)
 	(*c.Deleted)[pid] = true
-}
 
-func (c *CRDT) Reconcile(crdt *CRDT) (*CRDT, bool) {
-	isChanged := false
-
-	for k := range *crdt.Added {
-		c.AddPhoto(k)
-		isChanged = true
+	err := c.PersistCRDT()
+	if err != nil {
+		delete(*c.Deleted, pid)
+		if isInAdded {
+			(*c.Added)[pid] = true
+		}
+		return err
 	}
 
-	for k := range *crdt.Deleted {
-		c.DeletePhoto(k)
-		isChanged = true
-	}
-
-	return c, isChanged
+	return nil
 }
 
 func (c *CRDT) UnmarshalJSON(d []byte) error {
