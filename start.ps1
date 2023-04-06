@@ -26,8 +26,8 @@ Start-Job -ScriptBlock {
 $ui_pid = (Get-Job | Select-Object -Last 1).Id
 
 try {
-    # tail the UI output in real-time
-    Receive-Job -Id $ui_pid -Wait
+    # tail the Go app output in real-time
+    Receive-Job -Id $go_pid -Wait
 } finally {
     Write-Host "Received termination signal, stopping jobs."
     Set-Location $script_dir
