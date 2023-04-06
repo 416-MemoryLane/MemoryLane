@@ -85,6 +85,7 @@ func (wh *WingmanHandler) HandleStream(stream network.Stream) {
 		albumPhotos, err := wh.Gallery.GetPhotos(msgAlbumId)
 		if err != nil {
 			wh.l.Printf("error getting photos: %v\n", err)
+			continue
 		}
 		for p := range *albumPhotos {
 			if val, ok := (*msgCrdt.Added)[p]; !val || !ok {

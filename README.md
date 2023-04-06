@@ -4,4 +4,4 @@
 
 From the project root directory:
 
-`go run app.go`
+`go run app.go --username <username> --password <password>`
