@@ -6,18 +6,23 @@ if ($args.Count -ne 2) {
 $user = $args[0]
 $pass = $args[1]
 
+# get the path of the current script's directory
+$script_dir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
 # run the Go app in the background
 Start-Job -ScriptBlock {
     & go mod download
     & go run app.go --username $using:user --password $using:pass
-}
+} | Out-Null
 
 # save the PID of the last background process
 $go_pid = (Get-Job | Select-Object -Last 1).Id
 
 # run the UI in the background
-cd ui
-Start-Job -ScriptBlock { & ./start_ui.ps1 }
+Start-Job -ScriptBlock { 
+    Set-Location $using:script_dir\ui
+    & .\start_ui.ps1 
+} | Out-Null
 $ui_pid = (Get-Job | Select-Object -Last 1).Id
 
 try {
@@ -25,7 +30,8 @@ try {
     Receive-Job -Id $ui_pid -Wait
 } finally {
     Write-Host "Received termination signal, stopping jobs."
-    cd ..
-    Stop-Job $ui_pid -Wait
-    Stop-Job $go_pid -Wait
+    Set-Location $script_dir
+    Stop-Job $ui_pid
+    Stop-Job $go_pid
+    Wait-Job $ui_pid, $go_pid | Out-Null
 }
