@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <username> <password>"
+    exit 1
+fi
+
+user=$1
+pass=$2
+
+# run the Go app in the background
+go mod download
+go run app.go --username $user --password $pass &
+
+# save the PID of the last background process
+go_pid=$!
+
+# run the UI in the background
+cd ui
+./start_ui.sh &
+ui_pid=$!
+
+# wait for both background processes to finish
+wait $go_pid
+wait $ui_pid
