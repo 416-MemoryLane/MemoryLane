@@ -37,7 +37,6 @@ function App() {
 
   // Auth
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [credentials, setCredentials] = useState(initialCredentials);
   const [currentUser, setCurrentUser] = useState("");
 
@@ -105,9 +104,6 @@ function App() {
 
   const notifyError = (msg) => toast.error(msg, toastOptions);
 
-  const notifySuccessfulLogout = (username) =>
-    toast.success(`${username} successfully logged out`, toastOptions);
-
   const handleLogin = async (username, password) => {
     console.log(username, password);
     if (password.length < 4) {
@@ -134,21 +130,12 @@ function App() {
         setCurrentUser(username);
         setCredentials(initialCredentials);
         setIsLoading(false);
-        setIsLoginModalOpen(false);
         notifySuccessfulLogin(username);
       } else {
         notifyError(json.message);
         setIsLoading(false);
       }
     }
-  };
-
-  const handleLogout = () => {
-    const user = localStorage.getItem("galactus-user");
-    localStorage.removeItem("galactus-user");
-    localStorage.removeItem("galactus-token");
-    setCurrentUser("");
-    notifySuccessfulLogout(user);
   };
 
   const handleCreateAlbum = async () => {
@@ -258,38 +245,6 @@ function App() {
           </div>
         </div>
       </Modal>
-      <Modal
-        isOpen={isLoginModalOpen}
-        callbackFn={() => setIsLoginModalOpen(false)}
-      >
-        <div className="w-[30rem] flex flex-col gap-5">
-          <p className="self-center text-3xl">Log in</p>
-          <input
-            className="border-2 rounded-md h-10 p-3"
-            placeholder="Username"
-            value={credentials.username}
-            onChange={(e) =>
-              setCredentials({ ...credentials, username: e.target.value })
-            }
-            type="text"
-          />
-          <input
-            className="border-2 rounded-md h-10 p-3"
-            placeholder="Password"
-            value={credentials.password}
-            onChange={(e) =>
-              setCredentials({ ...credentials, password: e.target.value })
-            }
-            type="password"
-          />
-          <div
-            className="hover:cursor-pointer py-2 rounded-lg border-2 border-emerald-200 self-center bg-emerald-100 px-6"
-            onClick={handleLogin}
-          >
-            {isLoading ? <BeatLoader color="#36d7b7" /> : "Submit"}
-          </div>
-        </div>
-      </Modal>
       <div className="w-full flex justify-center align-middle">
         <div className="w-7/12 self-center">
           <div className="flex justify-between my-8">
@@ -306,21 +261,6 @@ function App() {
                   onClick={() => setIsCreateModalOpen(true)}
                 >
                   Add album
-                </p>
-              )}
-              {currentUser ? (
-                <p
-                  className="self-center bg-rose-100 border-2 border-rose-200 py-2 px-4 rounded-xl hover:shadow-lg hover:cursor-pointer"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </p>
-              ) : (
-                <p
-                  className="self-center bg-sky-100 border-2 border-sky-200 py-2 px-4 rounded-xl hover:shadow-lg hover:cursor-pointer"
-                  onClick={() => setIsLoginModalOpen(true)}
-                >
-                  Login
                 </p>
               )}
             </div>
