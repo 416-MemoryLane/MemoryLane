@@ -79,15 +79,15 @@ func main() {
 	defer node.Close()
 
 	// Extract multiaddr to send to Galactus
-	maddr := newMultiAddr(string(ip), node, l)
+	privateMAddr, publicMAddr := newMultiAddrs(string(ip), node, l)
 	node.SetStreamHandler(PROTOCOL_ID, func(s network.Stream) {
-		handler := wingman.NewWingmanHandler(maddr, PROTOCOL_ID, &node, g, l)
+		handler := wingman.NewWingmanHandler(privateMAddr, PROTOCOL_ID, &node, g, l)
 		handler.HandleStream(s)
 	})
-	l.Println("Listening on:", maddr)
+	l.Println("Listening on:", privateMAddr)
 
 	// Instantiate Galactus Client and log in
-	gc := galactus_client.NewGalactusClient(GALACTUS_API, un, pw, maddr, l)
+	gc := galactus_client.NewGalactusClient(GALACTUS_API, un, pw, publicMAddr, l)
 	loginResp, err := gc.Login()
 	if err != nil {
 		l.Fatalf("Error logging in for user %s: %v", un, err)
@@ -123,7 +123,7 @@ func main() {
 
 			// Add to map of peer addresses to albums
 			for _, u := range syncAlbum.AuthorizedUsers {
-				if maddr != u {
+				if publicMAddr != u {
 					_, ok := peerAddrsToAlbums[u]
 					if !ok {
 						peerAddrsToAlbums[u] = &[]string{}
@@ -175,7 +175,7 @@ func main() {
 
 				// Construct initial wingmanMsg
 				wingmanMsg := wingman.WingmanMessage{
-					SenderMultiAddr: maddr,
+					SenderMultiAddr: publicMAddr,
 					Album:           aid,
 					Crdt:            crdt,
 					Photos:          nil,
@@ -194,7 +194,7 @@ func main() {
 					}
 
 					wingmanMsg = wingman.WingmanMessage{
-						SenderMultiAddr: maddr,
+						SenderMultiAddr: publicMAddr,
 						Album:           aid,
 						Crdt:            crdt,
 						Photos:          nil,
@@ -223,27 +223,28 @@ func main() {
 	}
 }
 
-func newMultiAddr(ipStr string, node host.Host, l *log.Logger) string {
-	var privateAddrs []multiaddr.Multiaddr
+func newMultiAddrs(ipStr string, node host.Host, l *log.Logger) (string, string) {
+	var privateAddr string
+	var publicAddr string
 
 	for _, addr := range node.Addrs() {
 		addrStr := addr.String()
 		addrSplit := strings.Split(addrStr, "/")
 		if addrSplit[1] == "ip4" && addrSplit[3] == "tcp" {
 			ip := net.ParseIP(addrSplit[2])
+			privateMAddrStr := strings.Join(addrSplit, "/")
 			addrSplit[2] = ipStr
-			multiaddrStr := strings.Join(addrSplit, "/")
-			mAddr, err := multiaddr.NewMultiaddr(multiaddrStr)
-			if err != nil {
-				l.Fatalf("error parsing multiaddr: %v", err)
-			}
+			publicMAddrStr := strings.Join(addrSplit, "/")
 			if ip != nil && ip.IsPrivate() {
-				privateAddrs = append(privateAddrs, mAddr)
+				privateAddr = fmt.Sprintf("%s/%s/%s", privateMAddrStr, PROTOCOL_ID, node.ID().String())
+				publicAddr = fmt.Sprintf("%s/%s/%s", publicMAddrStr, PROTOCOL_ID, node.ID().String())
 			}
 		}
 	}
 
-	multiaddr := fmt.Sprintf("%s/%s/%s", privateAddrs[0].String(), PROTOCOL_ID, node.ID().String())
+	if privateAddr == "" || publicAddr == "" {
+		l.Fatal("no private or public address available")
+	}
 
-	return multiaddr
+	return privateAddr, publicAddr
 }
