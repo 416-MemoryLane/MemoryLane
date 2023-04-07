@@ -28,4 +28,5 @@ For windows users,
 ### Restrictions & Assumptions
 
 - Starting the script with an unregistred user automatically creates a new user.
-- We assume that there will be one user per a machine.
+- We assume that there will be one user per repository instance. Once you have logged in successfully, you will not be able to change users.
+  - To reset the state of the repository delete the `/.env` file and `/memory-lane-gallery` directory from the project root directory.

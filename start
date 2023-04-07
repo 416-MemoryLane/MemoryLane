@@ -5,6 +5,41 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
+user=$1
+pass=$2
+
+if [ -f .env ]; then
+    correctuser=$(grep -o "^ML_USERNAME=[^[:space:]]*" .env | cut -d'=' -f2)
+    if [[ $(grep -o "^ML_USERNAME=$user$" .env) && $(grep -o "^ML_PASSWORD=$pass$" .env) ]]; then
+        echo "Logged in as $user"
+    else
+        echo "Incorrect username and password. Please login as $correctuser. Try again."
+        exit 1
+    fi
+else
+    # Send login request to galactus
+    response=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'$user'", "password":"'$pass'"}' https://memory-lane-381119.wl.r.appspot.com/login)
+    message=$(echo $response | grep -o '"message":"[^"]*"' | cut -d'"' -f4)
+    
+    if [[ $message == "$user successfully logged in" || $message == "Account with username $user successfully created" ]]; then
+        if [[ $message == "Account with username $user successfully created" ]]; then
+            echo $message
+        fi
+        echo "ML_USERNAME=$user" > .env
+        echo "ML_PASSWORD=$pass" >> .env
+        echo "Logged in as $user"
+    else
+        echo "Incorrect username and password. Please try again."
+        exit 1
+    fi
+fi
+
+
+# run the Go app in the background
+go mod download
+go run app.go --username $user --password $pass &
+go_pid=$!
+
 # function to cleanup the background processes
 cleanup() {
     echo "Received termination signal, stopping jobs."
@@ -14,14 +49,6 @@ cleanup() {
 
 # trap the SIGINT signal and call the cleanup function
 trap cleanup SIGINT
-
-user=$1
-pass=$2
-
-# run the Go app in the background
-go mod download
-go run app.go --username $user --password $pass &
-go_pid=$!
 
 # run the UI in the background
 cd ui

@@ -79,13 +79,10 @@ export const getAlbums = () => {
 };
 
 app.get("/login", (req, res) => {
-  console.log(process.env);
-  res
-    .status(200)
-    .send({
-      username: process.env.ML_USERNAME,
-      password: process.env.ML_PASSWORD,
-    });
+  res.status(200).send({
+    username: process.env.ML_USERNAME,
+    password: process.env.ML_PASSWORD,
+  });
 });
 
 app.get("/albums", (req, res) => {
