@@ -170,7 +170,11 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 			return "", fmt.Errorf("failed to create file: %w", err)
 		}
 		defer f.Close()
-		if err := jpeg.Encode(f, p, nil); err != nil {
+
+		opts := &jpeg.Options{
+			Quality: 80, // Set the quality level
+		}
+		if err := jpeg.Encode(f, p, opts); err != nil {
 			return "", fmt.Errorf("failed to encode to %s: %w", suffix, err)
 		}
 	case "image/png":
@@ -182,7 +186,11 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 			return "", fmt.Errorf("failed to create file: %w", err)
 		}
 		defer f.Close()
-		if err := png.Encode(f, p); err != nil {
+
+		pngEncoder := png.Encoder{
+			CompressionLevel: png.BestCompression,
+		}
+		if err := pngEncoder.Encode(f, p); err != nil {
 			return "", fmt.Errorf("failed to encode to %s: %w", suffix, err)
 		}
 	default:
