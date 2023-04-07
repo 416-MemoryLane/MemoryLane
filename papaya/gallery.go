@@ -161,19 +161,7 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 
 	// Create and encode the photo based on mimeType
 	switch mimeType := photo.MimeType; mimeType {
-	case "image/jpg":
-		suffix := "jpeg"
-		photoFileName := fmt.Sprintf("%s.%s", pid, suffix)
-		photoFile := filepath.Join(g.GalleryDir, aid, photoFileName)
-		f, err := os.Create(photoFile)
-		if err != nil {
-			return "", fmt.Errorf("failed to create file: %w", err)
-		}
-		defer f.Close()
-		if err := jpeg.Encode(f, p, nil); err != nil {
-			return "", fmt.Errorf("failed to encode to %s: %w", suffix, err)
-		}
-	case "image/jpeg":
+	case "image/jpg", "image/jpeg":
 		suffix := "jpeg"
 		photoFileName := fmt.Sprintf("%s.%s", pid, suffix)
 		photoFile := filepath.Join(g.GalleryDir, aid, photoFileName)
