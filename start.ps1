@@ -37,8 +37,8 @@ if (Test-Path $envFilePath) {
         if ($message -eq "Account with username $user successfully created") {
             Write-Host $message
         }
-        "ML_USERNAME=$user" | Out-File $envFilePath
-        "ML_PASSWORD=$pass" | Out-File $envFilePath -Append
+        "ML_USERNAME=$user" | Out-File -Encoding utf8 -FilePath $envFilePath
+        "ML_PASSWORD=$pass" | Out-File -Encoding utf8 -FilePath $envFilePath -Append
         Write-Host "Logged in as $user"
     } else {
         Write-Host "Incorrect username and password. Please try again."
