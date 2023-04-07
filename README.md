@@ -11,6 +11,7 @@
 - Go version 1.16 or later. You can download and install it from the official website: https://golang.org/dl/.
 - Node.js version 14 or later. You can download and install it from the official website: https://nodejs.org/en/download/.
 - Yarn package manager. You can install it using the following command: `npm install -g yarn`.
+- If running on Windows: Powershell version 7 or later.
 
 **Note**: Make sure that Go, Node.js, and Yarn are properly installed and configured before running the application.
 
