@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"log"
@@ -152,7 +151,6 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 	// Register image formats
 	image.RegisterFormat("jpg", "jpeg", jpeg.Decode, jpeg.DecodeConfig)
 	image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
-	image.RegisterFormat("gif", "gif", gif.Decode, gif.DecodeConfig)
 	image.RegisterFormat("jpeg", "jpeg", jpeg.Decode, jpeg.DecodeConfig)
 
 	// Decode the image bytes
@@ -197,18 +195,6 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 		}
 		defer f.Close()
 		if err := png.Encode(f, p); err != nil {
-			return "", fmt.Errorf("failed to encode to %s: %w", suffix, err)
-		}
-	case "image/gif":
-		suffix := "gif"
-		photoFileName := fmt.Sprintf("%s.%s", pid, suffix)
-		photoFile := filepath.Join(g.GalleryDir, aid, photoFileName)
-		f, err := os.Create(photoFile)
-		if err != nil {
-			return "", fmt.Errorf("failed to create file: %w", err)
-		}
-		defer f.Close()
-		if err := gif.Encode(f, p, nil); err != nil {
 			return "", fmt.Errorf("failed to encode to %s: %w", suffix, err)
 		}
 	default:
