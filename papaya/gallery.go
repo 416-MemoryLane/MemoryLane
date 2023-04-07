@@ -171,10 +171,7 @@ func (g *Gallery) AddPhotoWithFileName(aid, pid string, photo Photo) (string, er
 		}
 		defer f.Close()
 
-		opts := &jpeg.Options{
-			Quality: 80, // Set the quality level
-		}
-		if err := jpeg.Encode(f, p, opts); err != nil {
+		if err := jpeg.Encode(f, p, nil); err != nil {
 			return "", fmt.Errorf("failed to encode to %s: %w", suffix, err)
 		}
 	case "image/png":
