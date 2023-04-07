@@ -105,36 +105,31 @@ function App() {
   const notifyError = (msg) => toast.error(msg, toastOptions);
 
   const handleLogin = async (username, password) => {
-    console.log(username, password);
-    if (password.length < 4) {
-      alert("Password should be greater than 4 characters.");
-    } else {
-      setIsLoading(true);
-      const res = await fetch(
-        "https://memory-lane-381119.wl.r.appspot.com/login",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            username: username,
-            password: password,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const json = await res.json();
-      if (res.ok) {
-        localStorage.setItem("galactus-user", username);
-        localStorage.setItem("galactus-token", json.token);
-        setCurrentUser(username);
-        setCredentials(initialCredentials);
-        setIsLoading(false);
-        notifySuccessfulLogin(username);
-      } else {
-        notifyError(json.message);
-        setIsLoading(false);
+    setIsLoading(true);
+    const res = await fetch(
+      "https://memory-lane-381119.wl.r.appspot.com/login",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          username: username,
+          password: password,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
+    );
+    const json = await res.json();
+    if (res.ok) {
+      localStorage.setItem("galactus-user", username);
+      localStorage.setItem("galactus-token", json.token);
+      setCurrentUser(username);
+      setCredentials(initialCredentials);
+      setIsLoading(false);
+      notifySuccessfulLogin(username);
+    } else {
+      notifyError(json.message);
+      setIsLoading(false);
     }
   };
 
