@@ -51,7 +51,7 @@ cleanup() {
 trap cleanup SIGINT
 
 # run the UI in the background
-cd ui
+cd titan
 ./start_ui.sh &
 ui_pid=$!
 
