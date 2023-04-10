@@ -57,7 +57,7 @@ $go_pid = (Get-Job | Select-Object -Last 1).Id
 
 # run the UI in the background
 Start-Job -ScriptBlock { 
-    Set-Location $using:script_dir\ui
+    Set-Location $using:script_dir\titan
     & .\start_ui.ps1 
 } | Out-Null
 $ui_pid = (Get-Job | Select-Object -Last 1).Id
