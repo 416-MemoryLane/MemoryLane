@@ -1,5 +1,4 @@
 import { WebSocket, WebSocketServer } from "ws";
-import { getAlbums } from "./app.mjs";
 
 export const wss = new WebSocketServer({ noServer: true });
 
@@ -16,14 +15,3 @@ const handleMessage = ({ ws, data }) => {
   const message = JSON.parse(data);
 };
 
-wss.on("connection", (ws, req) => {
-  sendMessage({
-    message: "Connected to Memory Lane WebSocket Server",
-    type: "connection",
-  });
-
-  sendMessage("albums", getAlbums());
-  ws.on("message", (data) => {
-    handleMessage({ ws, data });
-  });
-});

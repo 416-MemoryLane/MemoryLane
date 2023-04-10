@@ -13,7 +13,10 @@
 - Yarn package manager. You can install it using the following command: `npm install -g yarn`.
 - If running on Windows: Powershell version 7 or later.
 
-**Note**: Make sure that Go, Node.js, and Yarn are properly installed and configured before running the application.
+**Notes**: 
+- Make sure that Go, Node.js, and Yarn are properly installed and configured before running the application.
+- This application runs best on UNIX based operating systems (MacOS, Linux).
+- This application will not work in containerized or virtualized environments such as Docker, WSL, etc. 
 
 ### Usage
 
