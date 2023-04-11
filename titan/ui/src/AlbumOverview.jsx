@@ -43,7 +43,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
   useEffect(() => {
     const promises = images.map((image) => {
       return new Promise((resolve, reject) => {
-        const imageUrl = `${image}&random=${Math.random()}`;
+        const imageUrl = `${image}?random=${Math.random()}`;
         const img = new Image();
         img.onload = () => {
           const width = img.width;
