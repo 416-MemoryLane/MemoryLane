@@ -21,7 +21,7 @@ if (!fs.existsSync(GALLERY_DIR)) {
   fs.mkdirSync(GALLERY_DIR);
 }
 
-watch(GALLERY_DIR, { recursive: true }, (_, name) => {
+watch(GALLERY_DIR, { recursive: true, delay: 1000 }, (_, name) => {
   if (!name.includes("crdt.json")) {
     sendMessage("albums", getAlbums());
   }
