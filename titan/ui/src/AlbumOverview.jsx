@@ -178,9 +178,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
         callbackFn={() => setDeleteModalOpen(false)}
       >
         <div className="flex flex-col">
-          <p className="text-2xl">
-            Are you sure you want to delete this album?
-          </p>
+          <p className="text-2xl">Are you sure you want to leave this album?</p>
           <div className="flex flex-row self-center gap-3 mt-7">
             <p
               className="px-8 py-2 bg-green-200 border-green-300 border-[2px] rounded-md hover:cursor-pointer"
@@ -210,7 +208,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
               className="px-3 hover:text-red-500"
               onClick={() => setDeleteModalOpen(true)}
             >
-              <span className="text-md font-semibold">Delete Album</span>
+              <span className="text-md font-semibold">Leave Album</span>
             </button>
           </div>
           <h1 className="text-2xl font-bold">{albumTitle}</h1>
