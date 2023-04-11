@@ -110,6 +110,7 @@ app.delete("/albums/:uuid", (req, res) => {
   const { uuid } = req.params;
   const path = `${GALLERY_DIR}/${uuid}`;
   fs.rmSync(path, { recursive: true, force: true });
+  sendMessage("albums", getAlbums());
   res.status(200).send("Album deleted");
 });
 
@@ -174,6 +175,7 @@ app.delete("/albums/:albumName/images/:imageName", (req, res) => {
     crdt.added = crdt.added.filter((uuid) => uuid !== photoUuid);
     crdt.deleted.push(photoUuid);
     fs.writeFileSync(crdtPath, JSON.stringify(crdt));
+    sendMessage("albums", getAlbums());
     res.end("File is deleted successfully!");
   });
 });
