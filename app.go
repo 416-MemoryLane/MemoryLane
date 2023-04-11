@@ -151,46 +151,48 @@ func main() {
 
 				// Send message to each album
 				for _, aid := range *albums {
-					crdt, err := g.GetAlbumCRDT(aid)
-					if err != nil {
-						l.Fatalf("failed retrieving album CRDT: %v", err)
-					}
-
-					aid := crdt.Album
-					l.Println("Creating a stream for album:", aid)
-
-					// Construct initial wingmanMsg
-					wingmanMsg := wingman.WingmanMessage{
-						SenderMultiAddr: maddr,
-						Album:           aid,
-						Crdt:            crdt,
-						Photos:          nil,
-					}
-
 					go func() {
-						// Encode JSON data and send over stream
-						encoder := json.NewEncoder(s)
-						if err := encoder.Encode(&wingmanMsg); err != nil {
-							l.Fatalf("failed encoding message: %v", err)
-						}
-
 						crdt, err := g.GetAlbumCRDT(aid)
 						if err != nil {
-							l.Fatalf("failed retrieving crdt: %v", err)
+							l.Fatalf("failed retrieving album CRDT: %v", err)
 						}
 
-						wingmanMsg = wingman.WingmanMessage{
+						aid := crdt.Album
+						l.Println("Creating a stream for album:", aid)
+
+						// Construct initial wingmanMsg
+						wingmanMsg := wingman.WingmanMessage{
 							SenderMultiAddr: maddr,
 							Album:           aid,
 							Crdt:            crdt,
 							Photos:          nil,
 						}
 
-						if err = encoder.Encode(&wingmanMsg); err != nil {
-							l.Printf("failed encoding message: %v\n", err)
-						} else {
-							l.Printf("sent msg to: %v\n for album: %v\n", peerAddrInfo.String(), aid)
-						}
+						go func() {
+							// Encode JSON data and send over stream
+							encoder := json.NewEncoder(s)
+							if err := encoder.Encode(&wingmanMsg); err != nil {
+								l.Fatalf("failed encoding message: %v", err)
+							}
+
+							crdt, err := g.GetAlbumCRDT(aid)
+							if err != nil {
+								l.Fatalf("failed retrieving crdt: %v", err)
+							}
+
+							wingmanMsg = wingman.WingmanMessage{
+								SenderMultiAddr: maddr,
+								Album:           aid,
+								Crdt:            crdt,
+								Photos:          nil,
+							}
+
+							if err = encoder.Encode(&wingmanMsg); err != nil {
+								l.Printf("failed encoding message: %v\n", err)
+							} else {
+								l.Printf("sent msg to: %v\n for album: %v\n", peerAddrInfo.String(), aid)
+							}
+						}()
 					}()
 				}
 			}()
