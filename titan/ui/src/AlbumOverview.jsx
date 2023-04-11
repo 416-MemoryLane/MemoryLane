@@ -43,12 +43,13 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
   useEffect(() => {
     const promises = images.map((image) => {
       return new Promise((resolve, reject) => {
+        const imageUrl = `${image}&random=${Math.random()}`;
         const img = new Image();
         img.onload = () => {
           const width = img.width;
           const height = img.height;
           resolve({
-            src: image,
+            src: imageUrl,
             width: width,
             height: height,
             fileName: image.split("/").pop(),
@@ -57,7 +58,7 @@ export const AlbumOverview = ({ albumId, albumTitle, images, onBackClick }) => {
         img.onerror = () => {
           reject(new Error(`Failed to load image: ${image}`));
         };
-        img.src = getEndpoint(image);
+        img.src = getEndpoint(imageUrl);
       });
     });
 
