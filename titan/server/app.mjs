@@ -21,7 +21,7 @@ if (!fs.existsSync(GALLERY_DIR)) {
   fs.mkdirSync(GALLERY_DIR);
 }
 
-watch(GALLERY_DIR, { recursive: true, delay: 1000 }, (_, name) => {
+watch(GALLERY_DIR, { recursive: true, delay: 750 }, (_, name) => {
   if (!name.includes("crdt.json")) {
     sendMessage("albums", getAlbums());
   }
@@ -40,42 +40,44 @@ const getPhotoUuid = (fileName) => {
 };
 
 export const getAlbums = () => {
-  return fs
-    .readdirSync(GALLERY_DIR, { withFileTypes: true })
-    .map((album) => {
-      if (!album.isDirectory()) return null;
-      const images = fs.readdirSync(`${GALLERY_DIR}/${album.name}`, {
-        withFileTypes: true,
-      });
-      const crdtPath = `${GALLERY_DIR}/${album.name}/crdt.json`;
-      if (!fs.existsSync(crdtPath)) {
-        return res.status(500).send("No crdt.json file found in folder");
-      }
+  return (
+    fs
+      .readdirSync(GALLERY_DIR, { withFileTypes: true })
+      .map((album) => {
+        if (!album.isDirectory()) return null;
+        const images = fs.readdirSync(`${GALLERY_DIR}/${album.name}`, {
+          withFileTypes: true,
+        });
+        const crdtPath = `${GALLERY_DIR}/${album.name}/crdt.json`;
+        if (!fs.existsSync(crdtPath)) {
+          return res.status(500).send("No crdt.json file found in folder");
+        }
 
-      const crdt = JSON.parse(fs.readFileSync(crdtPath, "utf-8"));
+        const crdt = JSON.parse(fs.readFileSync(crdtPath, "utf-8"));
 
-      return {
-        albumId: album.name,
-        title: crdt.album_name,
-        images: images
-          .filter((file) => {
-            const fileName = file.name;
-            if (!fileName.includes(".")) {
-              return false;
-            }
-            const extension = getFileExtension(fileName);
-            if (
-              !extension ||
-              !["jpg", "png", "gif", "jpeg", "tiff"].includes(extension)
-            ) {
-              return false;
-            }
-            return file.isFile();
-          })
-          .map((file) => `${STATIC_PATH}/${album.name}/${file.name}`),
-      };
-    })
-    .filter((album) => album !== null);
+        return {
+          albumId: album.name,
+          title: crdt.album_name,
+          images: images
+            .filter((file) => {
+              const fileName = file.name;
+              if (!fileName.includes(".")) {
+                return false;
+              }
+              const extension = getFileExtension(fileName);
+              if (
+                !extension ||
+                !["jpg", "png", "gif", "jpeg", "tiff"].includes(extension)
+              ) {
+                return false;
+              }
+              return file.isFile();
+            })
+            .map((file) => `${STATIC_PATH}/${album.name}/${file.name}`),
+        };
+      })
+      .filter((album) => album !== null) ?? []
+  );
 };
 
 app.get("/login", (req, res) => {
@@ -110,7 +112,6 @@ app.delete("/albums/:uuid", (req, res) => {
   const { uuid } = req.params;
   const path = `${GALLERY_DIR}/${uuid}`;
   fs.rmSync(path, { recursive: true, force: true });
-  sendMessage("albums", getAlbums());
   res.status(200).send("Album deleted");
 });
 
