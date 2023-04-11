@@ -136,12 +136,13 @@ func main() {
 			}
 
 			// Connect to the node at the given address
-			if err := node.Connect(context.Background(), *peerAddrInfo); err != nil {
-				l.Printf("failed to connect to peer: %v", err)
-				continue
+			if !isConnected(node, peerAddrInfo.ID) {
+				if err := node.Connect(context.Background(), *peerAddrInfo); err != nil {
+					l.Printf("failed to connect to peer: %v", err)
+					continue
+				}
+				l.Println("Connected to:", peerAddrInfo.String())
 			}
-			l.Println("Connected to:", peerAddrInfo.String())
-
 			// Open a new stream to a connected node
 			s, err := node.NewStream(context.Background(), peerAddrInfo.ID, PROTOCOL_ID)
 			if err != nil {
@@ -171,12 +172,12 @@ func main() {
 						// Encode JSON data and send over stream
 						encoder := json.NewEncoder(s)
 						if err := encoder.Encode(&wingmanMsg); err != nil {
-							l.Fatalf("failed encoding message: %v", err)
+							l.Printf("failed encoding message: %v", err)
 						}
 
 						crdt, err := g.GetAlbumCRDT(aid)
 						if err != nil {
-							l.Fatalf("failed retrieving crdt: %v", err)
+							l.Printf("failed retrieving crdt: %v", err)
 						}
 
 						wingmanMsg = wingman.WingmanMessage{
@@ -227,4 +228,10 @@ func newMultiAddr(node host.Host, l *log.Logger) string {
 	multiaddr := fmt.Sprintf("%s/%s/%s", privateAddrs[0].String(), PROTOCOL_ID, node.ID().String())
 
 	return multiaddr
+}
+
+func isConnected(host host.Host, targetPeer peer.ID) bool {
+	// Check if the host is connected to the specified peer
+	conns := host.Network().ConnsToPeer(targetPeer)
+	return len(conns) > 0
 }
