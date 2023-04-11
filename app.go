@@ -123,34 +123,34 @@ func main() {
 		}
 
 		for addr, albums := range peerAddrsToAlbums {
-			// Parse the multiaddr string.
-			peerMA, err := multiaddr.NewMultiaddr(addr)
-			if err != nil {
-				l.Printf("failed parsing to peerMA: %v", err)
-				continue
-			}
-			peerAddrInfo, err := peer.AddrInfoFromP2pAddr(peerMA)
-			if err != nil {
-				l.Printf("failed parsing to peer address info: %v", err)
-				continue
-			}
+			go func() {
+				// Parse the multiaddr string.
+				peerMA, err := multiaddr.NewMultiaddr(addr)
+				if err != nil {
+					l.Printf("failed parsing to peerMA: %v", err)
+					return
+				}
+				peerAddrInfo, err := peer.AddrInfoFromP2pAddr(peerMA)
+				if err != nil {
+					l.Printf("failed parsing to peer address info: %v", err)
+					return
+				}
 
-			// Connect to the node at the given address
-			if err := node.Connect(context.Background(), *peerAddrInfo); err != nil {
-				l.Printf("failed to connect to peer: %v", err)
-				continue
-			}
-			l.Println("Connected to:", peerAddrInfo.String())
+				// Connect to the node at the given address
+				if err := node.Connect(context.Background(), *peerAddrInfo); err != nil {
+					l.Printf("failed to connect to peer: %v", err)
+					return
+				}
+				l.Println("Connected to:", peerAddrInfo.String())
 
-			// Open a new stream to a connected node
-			s, err := node.NewStream(context.Background(), peerAddrInfo.ID, PROTOCOL_ID)
-			if err != nil {
-				l.Fatalf("failed opening a new stream: %v", err)
-			}
+				// Open a new stream to a connected node
+				s, err := node.NewStream(context.Background(), peerAddrInfo.ID, PROTOCOL_ID)
+				if err != nil {
+					l.Fatalf("failed opening a new stream: %v", err)
+				}
 
-			// Send message to each album
-			for _, aid := range *albums {
-				go func() {
+				// Send message to each album
+				for _, aid := range *albums {
 					crdt, err := g.GetAlbumCRDT(aid)
 					if err != nil {
 						l.Fatalf("failed retrieving album CRDT: %v", err)
@@ -192,8 +192,8 @@ func main() {
 							l.Printf("sent msg to: %v\n for album: %v\n", peerAddrInfo.String(), aid)
 						}
 					}()
-				}()
-			}
+				}
+			}()
 		}
 	}
 
