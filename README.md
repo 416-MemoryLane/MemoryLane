@@ -12,6 +12,7 @@
 - Node.js version 18 or later. You can download and install it from the official website: https://nodejs.org/en/download/.
 - Yarn package manager. You can install it using the following command: `npm install -g yarn`.
 - If running on Windows: Powershell version 7 or later.
+- Browser installed (preferably Chrome or Firefox)
 
 **Note**: Make sure that Go, Node.js, and Yarn are properly installed and configured before running the application.
 
@@ -31,3 +32,4 @@ For windows users,
 - Starting the script with an unregistred user automatically creates a new user.
 - We assume that there will be one user per repository instance. Once you have logged in successfully, you will not be able to change users.
   - To reset the state of the repository delete the `/.env` file and `/memory-lane-gallery` directory from the project root directory.
+- The application will not work in a virtualized environment (eg. Docker)
